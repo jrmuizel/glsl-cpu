@@ -46,6 +46,13 @@ SI T mix(T x, T y, Float a) {
         return (x - y) * a + x;
 }
 
+template <typename T>
+SI T mix(T x, Float y, Float a) {
+        return (x - y) * a + x;
+}
+
+
+
 /*
 enum RGBA {
         R,
@@ -72,6 +79,16 @@ struct vec2 {
         vec2(Float x, Float y): x(x), y(y) {}
         Float x;
         Float y;
+
+        Float& select(XYZW c) {
+                switch (c) {
+                    case X: return x;
+                    case Y: return y;
+                }
+        }
+        Float sel(XYZW c1) {
+                return select(c1);
+        }
 
         vec2 operator*=(Float a) {
                 x *= a;
@@ -168,10 +185,10 @@ Float pow(Float x, Float y) {
 
 
 struct ivec2 {
-        ivec2() { vec2(0); }
+        ivec2() { ivec2(0); }
         ivec2(I32 a): x(a), y(a) {}
         ivec2(I32 x, I32 y): x(x), y(y) {}
-        ivec2(U32 x, U32 y): x(__builtin_convertvector(x, I32)), y(__builtin_convertvector(y)) {}
+        ivec2(U32 x, U32 y): x(__builtin_convertvector(x, I32)), y(__builtin_convertvector(y, I32)) {}
         I32 x;
         I32 y;
 
@@ -186,6 +203,17 @@ struct ivec2 {
         }
 };
 
+struct ivec3 {
+        ivec3() { ivec3(0); }
+        ivec3(I32 a): x(a), y(a), z(a) {}
+        ivec3(I32 x, I32 y, I32 z): x(x), y(y), z(z) {}
+        I32 x;
+        I32 y;
+        I32 z;
+
+};
+
+
 
 struct vec3 {
         vec3() { vec3(0); }
@@ -195,6 +223,26 @@ struct vec3 {
         Float x;
         Float y;
         Float z;
+
+        Float& select(XYZW c) {
+                switch (c) {
+                    case X: return x;
+                    case Y: return y;
+                    case Z: return z;
+                }
+        }
+        Float sel(XYZW c1) {
+                return select(c1);
+        }
+
+        vec2 sel(XYZW c1, XYZW c2) {
+                return vec2(select(c1), select(c2));
+        }
+
+        vec3 sel(XYZW c1, XYZW c2, XYZW c3) {
+                return vec3(select(c1), select(c2), select(c3));
+        }
+
         friend vec3 operator*(vec3 a, Float b) {
                 return vec3(a.x*b, a.y*b, a.z*b);
         }
@@ -230,6 +278,27 @@ SI vec3 if_then_else(I32 c, vec3 t, vec3 e) {
                 if_then_else(c, t.z, e.z));
 }
 
+SI vec3 if_then_else(ivec3 c, vec3 t, vec3 e) {
+    return vec3(if_then_else(c.x, t.x, e.x),
+                if_then_else(c.y, t.y, e.y),
+                if_then_else(c.z, t.z, e.z));
+}
+
+I32 lessThanEqual(Float x, Float y) {
+        return x <= y;
+}
+
+
+SI ivec3 lessThanEqual(vec3 x, vec3 y) {
+    return ivec3(lessThanEqual(x.x, y.x),
+                 lessThanEqual(x.y, y.y),
+                 lessThanEqual(x.z, y.z));
+}
+
+
+
+
+
 SI vec3 clamp(vec3 a, vec3 minVal, vec3 maxVal) {
     return vec3(clamp(a.x, minVal.x, maxVal.x),
                 clamp(a.y, minVal.y, maxVal.y),
@@ -264,6 +333,8 @@ struct vec3_ref {
 struct vec4 {
         vec4() { vec4(0); }
         vec4(Float a): x(a), y(a), z(a), w(a) {}
+        vec4(Float x, Float y, Float z, Float w): x(x), y(y), z(z), w(w) {}
+        vec4(vec3 xyz, Float w): x(xyz.x), y(xyz.y), z(xyz.z), w(w) {}
         Float& select(XYZW c) {
                 switch (c) {
                     case X: return x;
@@ -272,6 +343,14 @@ struct vec4 {
                     case W: return w;
                 }
         }
+        Float sel(XYZW c1) {
+                return select(c1);
+        }
+
+        vec2 sel(XYZW c1, XYZW c2) {
+                return vec2(select(c1), select(c2));
+        }
+
         vec3 sel(XYZW c1, XYZW c2, XYZW c3) {
                 return vec3(select(c1), select(c2), select(c3));
         }
@@ -319,8 +398,22 @@ struct vec4 {
                         case 2: sel_w = z.w; break;
                         case 3: sel_w = w.w; break;
                 }
-                Float(sel_x, sel_y, sel_z, sel_w);
+                Float ret = {sel_x, sel_y, sel_z, sel_w};
+                return ret;
         }
+
+        friend vec4 operator/(vec4 a, Float b) {
+                return vec4(a.x/b, a.y/b, a.z/b, a.w/b);
+        }
+
+        friend vec4 operator*(vec4 a, Float b) {
+                return vec4(a.x*b, a.y*b, a.z*b, a.w*b);
+        }
+
+        friend vec4 operator*(Float b, vec4 a) {
+                return vec4(a.x*b, a.y*b, a.z*b, a.w*b);
+        }
+
 
         Float x;
         Float y;
@@ -328,7 +421,38 @@ struct vec4 {
         Float w;
 };
 
+SI vec4 if_then_else(I32 c, vec4 t, vec4 e) {
+    return vec4(if_then_else(c, t.x, e.x),
+                if_then_else(c, t.y, e.y),
+                if_then_else(c, t.z, e.z),
+                if_then_else(c, t.w, e.w));
+}
+
+
 struct sampler2D {
 };
+
+struct mat3 {
+        vec3 data[3];
+
+        vec3& operator[](int index) {
+                return data[index];
+        }
+
+        friend vec3 operator*(mat3 m, vec3 v) {
+                vec3 u;
+                u.x = m[0].x * v.x + m[1].x * v.y + m[2].x * v.z;
+                u.y = m[0].y * v.x + m[1].y * v.y + m[2].y * v.z;
+                u.z = m[0].z * v.x + m[1].z * v.y + m[2].z * v.z;
+                return u;
+        }
+};
+
+vec4 texelFetch(sampler2D sampler, ivec2 P, int lod) {
+}
+
+vec4 texture(sampler2D sampler, vec3 P) {
+}
+
 
 }
