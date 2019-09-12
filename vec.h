@@ -46,12 +46,12 @@ SI T mix(T x, T y, Float a) {
         return (x - y) * a + x;
 }
 
+//XXX: having this version helps
+//for arguments like mix(Float, double, Float)
 template <typename T>
 SI T mix(T x, Float y, Float a) {
         return (x - y) * a + x;
 }
-
-
 
 /*
 enum RGBA {
@@ -429,8 +429,14 @@ SI vec4 if_then_else(I32 c, vec4 t, vec4 e) {
 }
 
 
-struct sampler2D {
+struct sampler2D_impl {
+        uint32_t *buf;
+        uint32_t stride;
+        uint32_t height;
+        uint32_t width;
 };
+
+typedef sampler2D_impl *sampler2D;
 
 struct mat3 {
         vec3 data[3];
@@ -448,11 +454,53 @@ struct mat3 {
         }
 };
 
+uint32_t fetchPixel(sampler2D sampler, int x, int y) {
+        return sampler->buf[x  + y * sampler->stride];
+}
+
+float to_float(uint32_t x) {
+        return x * 1./255.;
+}
+
+Float extract_component(uint32_t a, uint32_t b, uint32_t c, uint32_t d, int shift) {
+        int mask = 0xff << shift;
+        Float ret = {
+                to_float((a & mask) >> shift),
+                to_float((b & mask) >> shift),
+                to_float((c & mask) >> shift),
+                to_float((d & mask) >> shift)};
+        return ret;
+}
+
+vec4 pixel_to_vec4(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
+      return vec4(extract_component(a, b, c, d, 16),
+           extract_component(a, b, c, d, 8),
+           extract_component(a, b, c, d, 0),
+           extract_component(a, b, c, d, 24));
+}
 vec4 texelFetch(sampler2D sampler, ivec2 P, int lod) {
+        return pixel_to_vec4(
+                      fetchPixel(sampler, P.x.x, P.y.x),
+                      fetchPixel(sampler, P.x.y, P.y.y),
+                      fetchPixel(sampler, P.x.z, P.y.z),
+                      fetchPixel(sampler, P.x.w, P.y.w)
+                      );
 }
 
 vec4 texture(sampler2D sampler, vec3 P) {
+        // just do nearest for now
+        ivec2 coord(round(P.x, sampler->width), round(P.y, sampler->height));
+        return texelFetch(sampler, coord, 0);
 }
 
 
+// See lp_build_sample_soa_code(
+// lp_build_sample_aos used for common cases
+// lp_build_sample_image_linear for an actual mip
+// lp_build_sample_fetch_image_linear
+// lp_build_lerp_simple
+
+// sampleQuad2D - does the bilinear lerp on 8bit values expanded to 16bit
+// it does the lerp on 4 pixels at a time
+// i.e. 4 Vector4s is 4*4*4 shorts
 }
