@@ -454,6 +454,11 @@ struct mat3 {
         }
 };
 
+struct mat4 {
+        vec4 data[4];
+};
+
+
 uint32_t fetchPixel(sampler2D sampler, int x, int y) {
         return sampler->buf[x  + y * sampler->stride];
 }
