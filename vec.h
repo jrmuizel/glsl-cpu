@@ -1,3 +1,4 @@
+#include <string.h>
 #include <stdint.h>
 #include <xmmintrin.h>
 
@@ -16,12 +17,18 @@ using U64 = V<uint64_t>;
 using U32 = V<uint32_t>;
 using U16 = V<uint16_t>;
 using U8  = V<uint8_t >;
-
+using Bool = V<int>;
 
 
 SI Float if_then_else(I32 c, Float t, Float e) {
     return _mm_or_ps(_mm_and_ps(c, t), _mm_andnot_ps(c, e));
 }
+
+SI Bool if_then_else(I32 c, Bool t, Bool e) {
+    return _mm_or_ps(_mm_and_ps(c, t), _mm_andnot_ps(c, e));
+}
+
+
 
 SI Float   min(Float a, Float b)       { return _mm_min_ps(a,b);    }
 SI Float   max(Float a, Float b)       { return _mm_max_ps(a,b);    }
@@ -36,7 +43,7 @@ SI Float sqrt(Float x) {
 
 
 SI Float step(Float edge, Float x) {
-        return if_then_else(x < edge, 0, 1);
+        return if_then_else(x < edge, Float(0), Float(1));
 }
 
 
@@ -52,6 +59,12 @@ template <typename T>
 SI T mix(T x, Float y, Float a) {
         return (x - y) * a + x;
 }
+
+template <typename T>
+SI T mix(T x, T y, T a) {
+        return (x - y) * a + x;
+}
+
 
 /*
 enum RGBA {
@@ -99,12 +112,29 @@ struct vec2 {
         friend vec2 operator*(vec2 a, Float b) {
                 return vec2(a.x*b, a.y*b);
         }
+        friend vec2 operator*(vec2 a, vec2 b) {
+                return vec2(a.x*b.x, a.y*b.y);
+        }
+
+        friend vec2 operator/(vec2 a, vec2 b) {
+                return vec2(a.x/b.x, a.y/b.y);
+        }
 
         friend vec2 operator-(vec2 a, vec2 b) {
                 return vec2(a.x-b.x, a.y-b.y);
         }
+        friend vec2 operator+(vec2 a, vec2 b) {
+                return vec2(a.x+b.x, a.y+b.y);
+        }
 
 };
+
+SI vec2   min(vec2 a, vec2 b)       { return vec2(min(a.x, b.x), min(a.y, b.y));    }
+
+SI vec2 if_then_else(I32 c, vec2 t, vec2 e) {
+    return vec2(if_then_else(c, t.x, e.x),
+                if_then_else(c, t.y, e.y));
+}
 
 vec2 step(vec2 edge, vec2 x) {
        return vec2(step(edge.x, x.x), step(edge.y, x.y));
@@ -141,7 +171,7 @@ Float   cast  (U32 v) { return      __builtin_convertvector((I32)v,   Float); }
         return _mm_floor_ps(v);
     #else
         Float roundtrip = _mm_cvtepi32_ps(_mm_cvttps_epi32(v));
-        return roundtrip - if_then_else(roundtrip > v, 1, 0);
+        return roundtrip - if_then_else(roundtrip > v, Float(1), Float(0));
     #endif
     }
 
@@ -187,10 +217,21 @@ Float pow(Float x, Float y) {
 struct ivec2 {
         ivec2() { ivec2(0); }
         ivec2(I32 a): x(a), y(a) {}
+        ivec2(int x, int y): x(x), y(y) {}
         ivec2(I32 x, I32 y): x(x), y(y) {}
         ivec2(U32 x, U32 y): x(__builtin_convertvector(x, I32)), y(__builtin_convertvector(y, I32)) {}
         I32 x;
         I32 y;
+
+        I32& select(XYZW c) {
+                switch (c) {
+                    case X: return x;
+                    case Y: return y;
+                }
+        }
+        I32 sel(XYZW c1) {
+                return select(c1);
+        }
 
         ivec2 operator*=(I32 a) {
                 x *= a;
@@ -201,6 +242,10 @@ struct ivec2 {
         friend ivec2 operator*(ivec2 a, I32 b) {
                 return ivec2(a.x*b, a.y*b);
         }
+        friend ivec2 operator+(ivec2 a, ivec2 b) {
+                return ivec2(a.x*b.x, a.y*b.y);
+        }
+
 };
 
 struct ivec3 {
@@ -335,6 +380,7 @@ struct vec4 {
         vec4(Float a): x(a), y(a), z(a), w(a) {}
         vec4(Float x, Float y, Float z, Float w): x(x), y(y), z(z), w(w) {}
         vec4(vec3 xyz, Float w): x(xyz.x), y(xyz.y), z(xyz.z), w(w) {}
+        vec4(vec2 xy, vec2 zw): x(xy.x), y(xy.y), z(zw.x), w(zw.y) {}
         Float& select(XYZW c) {
                 switch (c) {
                     case X: return x;
@@ -428,6 +474,7 @@ SI vec4 if_then_else(I32 c, vec4 t, vec4 e) {
                 if_then_else(c, t.w, e.w));
 }
 
+struct sampler2DArray {};
 
 struct sampler2D_impl {
         uint32_t *buf;
@@ -456,8 +503,19 @@ struct mat3 {
 
 struct mat4 {
         vec4 data[4];
+        vec4& operator[](int index) {
+                return data[index];
+        }
+
+
 };
 
+SI mat4 if_then_else(I32 c, mat4 t, mat4 e) {
+    return mat4{if_then_else(c, t[0], e[0]),
+                if_then_else(c, t[1], e[1]),
+                if_then_else(c, t[2], e[2]),
+                if_then_else(c, t[3], e[3])};
+}
 
 uint32_t fetchPixel(sampler2D sampler, int x, int y) {
         return sampler->buf[x  + y * sampler->stride];
