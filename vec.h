@@ -258,7 +258,15 @@ struct ivec3 {
 
 };
 
-
+struct ivec4 {
+        ivec4() { ivec4(0); }
+        ivec4(I32 a): x(a), y(a), z(a), w(a) {}
+        ivec4(I32 x, I32 y, I32 z, I32 w): x(x), y(y), z(z), w(w) {}
+        I32 x;
+        I32 y;
+        I32 z;
+        I32 w;
+};
 
 struct vec3 {
         vec3() { vec3(0); }
