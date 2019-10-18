@@ -268,6 +268,14 @@ struct ivec4 {
         I32 w;
 };
 
+SI ivec4 if_then_else(I32 c, ivec4 t, ivec4 e) {
+    return ivec4(if_then_else(c, t.x, e.x),
+                if_then_else(c, t.y, e.y),
+                if_then_else(c, t.z, e.z),
+                if_then_else(c, t.w, e.w);
+}
+
+
 struct vec3 {
         vec3() { vec3(0); }
         vec3(Float a): x(a), y(a), z(a) {}
@@ -352,11 +360,6 @@ SI ivec3 lessThanEqual(vec3 x, vec3 y) {
 
 
 
-SI vec3 clamp(vec3 a, vec3 minVal, vec3 maxVal) {
-    return vec3(clamp(a.x, minVal.x, maxVal.x),
-                clamp(a.y, minVal.y, maxVal.y),
-                clamp(a.z, minVal.z, maxVal.z));
-}
 
 vec3 pow(vec3 x, vec3 y) {
     return vec3(pow(x.x, y.x), pow(x.y, y.y), pow(x.z, y.z));
@@ -389,6 +392,7 @@ struct vec4 {
         vec4(Float x, Float y, Float z, Float w): x(x), y(y), z(z), w(w) {}
         vec4(vec3 xyz, Float w): x(xyz.x), y(xyz.y), z(xyz.z), w(w) {}
         vec4(vec2 xy, vec2 zw): x(xy.x), y(xy.y), z(zw.x), w(zw.y) {}
+        vec4(vec2 xy, Float z, Float w): x(xy.x), y(xy.y), z(z), w(w) {}
         Float& select(XYZW c) {
                 switch (c) {
                     case X: return x;
@@ -482,6 +486,20 @@ SI vec4 if_then_else(I32 c, vec4 t, vec4 e) {
                 if_then_else(c, t.w, e.w));
 }
 
+SI vec3 clamp(vec3 a, vec3 minVal, vec3 maxVal) {
+    return vec3(clamp(a.x, minVal.x, maxVal.x),
+                clamp(a.y, minVal.y, maxVal.y),
+                clamp(a.z, minVal.z, maxVal.z));
+}
+
+SI vec4 clamp(vec4 a, vec4 minVal, vec4 maxVal) {
+    return vec4(clamp(a.x, minVal.x, maxVal.x),
+                clamp(a.y, minVal.y, maxVal.y),
+                clamp(a.z, minVal.z, maxVal.z),
+                clamp(a.w, minVal.w, maxVal.w);
+}
+
+
 struct sampler2DArray {};
 
 struct sampler2D_impl {
@@ -492,6 +510,16 @@ struct sampler2D_impl {
 };
 
 typedef sampler2D_impl *sampler2D;
+
+struct isampler2D_impl {
+        uint32_t *buf;
+        uint32_t stride;
+        uint32_t height;
+        uint32_t width;
+};
+
+typedef isampler2D_impl *isampler2D;
+
 
 struct mat3 {
         vec3 data[3];
@@ -551,6 +579,15 @@ vec4 pixel_to_vec4(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
 }
 vec4 texelFetch(sampler2D sampler, ivec2 P, int lod) {
         return pixel_to_vec4(
+                      fetchPixel(sampler, P.x.x, P.y.x),
+                      fetchPixel(sampler, P.x.y, P.y.y),
+                      fetchPixel(sampler, P.x.z, P.y.z),
+                      fetchPixel(sampler, P.x.w, P.y.w)
+                      );
+}
+
+ivec4 texelFetch(isampler2D sampler, ivec2 P, int lod) {
+        return ivec4(
                       fetchPixel(sampler, P.x.x, P.y.x),
                       fetchPixel(sampler, P.x.y, P.y.y),
                       fetchPixel(sampler, P.x.z, P.y.z),
