@@ -262,6 +262,26 @@ struct ivec4 {
         ivec4() { ivec4(0); }
         ivec4(I32 a): x(a), y(a), z(a), w(a) {}
         ivec4(I32 x, I32 y, I32 z, I32 w): x(x), y(y), z(z), w(w) {}
+        I32& select(XYZW c) {
+                switch (c) {
+                    case X: return x;
+                    case Y: return y;
+                    case Z: return z;
+                    case W: return w;
+                }
+        }
+        I32 sel(XYZW c1) {
+                return select(c1);
+        }
+
+        ivec2 sel(XYZW c1, XYZW c2) {
+                return ivec2(select(c1), select(c2));
+        }
+
+        ivec3 sel(XYZW c1, XYZW c2, XYZW c3) {
+                return ivec3(select(c1), select(c2), select(c3));
+        }
+
         I32 x;
         I32 y;
         I32 z;
@@ -272,7 +292,7 @@ SI ivec4 if_then_else(I32 c, ivec4 t, ivec4 e) {
     return ivec4(if_then_else(c, t.x, e.x),
                 if_then_else(c, t.y, e.y),
                 if_then_else(c, t.z, e.z),
-                if_then_else(c, t.w, e.w);
+                if_then_else(c, t.w, e.w));
 }
 
 
@@ -496,7 +516,7 @@ SI vec4 clamp(vec4 a, vec4 minVal, vec4 maxVal) {
     return vec4(clamp(a.x, minVal.x, maxVal.x),
                 clamp(a.y, minVal.y, maxVal.y),
                 clamp(a.z, minVal.z, maxVal.z),
-                clamp(a.w, minVal.w, maxVal.w);
+                clamp(a.w, minVal.w, maxVal.w));
 }
 
 
@@ -520,6 +540,7 @@ struct isampler2D_impl {
 
 typedef isampler2D_impl *isampler2D;
 
+struct mat4;
 
 struct mat3 {
         vec3 data[3];
@@ -527,6 +548,13 @@ struct mat3 {
         vec3& operator[](int index) {
                 return data[index];
         }
+        mat3(vec3 a, vec3 b, vec3 c) {
+                data[0] = a;
+                data[1] = b;
+                data[2] = c;
+        }
+
+        mat3(mat4 &mat);
 
         friend vec3 operator*(mat3 m, vec3 v) {
                 vec3 u;
@@ -543,14 +571,32 @@ struct mat4 {
                 return data[index];
         }
 
+        friend vec4 operator*(mat4 m, vec4 v) {
+                vec4 u;
+                u.x = m[0].x * v.x + m[1].x * v.y + m[2].x * v.z + m[3].x * v.w;
+                u.y = m[0].y * v.x + m[1].y * v.y + m[2].y * v.z + m[3].y * v.w;
+                u.z = m[0].z * v.x + m[1].z * v.y + m[2].z * v.z + m[3].z * v.w;
+                u.w = m[0].w * v.x + m[1].w * v.y + m[2].w * v.z + m[3].w * v.w;
+                return u;
+        }
+
 
 };
+
+mat3::mat3(mat4 &mat) : mat3(vec3(mat[0].x, mat[0].y, mat[0].z),
+                    vec3(mat[1].x, mat[1].y, mat[1].z),
+                    vec3(mat[2].x, mat[2].y, mat[2].z)) {
+}
 
 SI mat4 if_then_else(I32 c, mat4 t, mat4 e) {
     return mat4{if_then_else(c, t[0], e[0]),
                 if_then_else(c, t[1], e[1]),
                 if_then_else(c, t[2], e[2]),
                 if_then_else(c, t[3], e[3])};
+}
+
+uint32_t fetchPixel(isampler2D sampler, int x, int y) {
+        return sampler->buf[x  + y * sampler->stride];
 }
 
 uint32_t fetchPixel(sampler2D sampler, int x, int y) {
