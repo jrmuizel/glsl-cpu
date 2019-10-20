@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <xmmintrin.h>
+#include <assert.h>
 
 // Every function in this file should be marked static and inline using SI.
 #if defined(__clang__)
@@ -10,6 +11,7 @@
 #endif
 
 namespace glsl {
+
 template <typename T> using V = T __attribute__((ext_vector_type(4)));
 using Float   = V<float   >;
 using I32 = V< int32_t>;
@@ -19,6 +21,8 @@ using U16 = V<uint16_t>;
 using U8  = V<uint8_t >;
 using Bool = V<int>;
 
+struct vec4;
+struct ivec2;
 
 SI Float if_then_else(I32 c, Float t, Float e) {
     return _mm_or_ps(_mm_and_ps(c, t), _mm_andnot_ps(c, e));
@@ -48,23 +52,6 @@ SI Float step(Float edge, Float x) {
 
 
 
-template <typename T>
-SI T mix(T x, T y, Float a) {
-        return (x - y) * a + x;
-}
-
-//XXX: having this version helps
-//for arguments like mix(Float, double, Float)
-template <typename T>
-SI T mix(T x, Float y, Float a) {
-        return (x - y) * a + x;
-}
-
-template <typename T>
-SI T mix(T x, T y, T a) {
-        return (x - y) * a + x;
-}
-
 
 /*
 enum RGBA {
@@ -90,6 +77,7 @@ struct vec2 {
         vec2() { vec2(0); }
         vec2(Float a): x(a), y(a) {}
         vec2(Float x, Float y): x(x), y(y) {}
+        vec2(ivec2 a);
         Float x;
         Float y;
 
@@ -102,12 +90,25 @@ struct vec2 {
         Float sel(XYZW c1) {
                 return select(c1);
         }
+        vec4 sel(XYZW c1, XYZW c2, XYZW c3, XYZW c4);
 
         vec2 operator*=(Float a) {
                 x *= a;
                 y *= a;
                 return *this;
         }
+
+        vec2 operator+=(vec2 a) {
+                x += a.x;
+                y += a.y;
+                return *this;
+        }
+        vec2 operator-=(vec2 a) {
+                x -= a.x;
+                y -= a.y;
+                return *this;
+        }
+
 
         friend vec2 operator*(vec2 a, Float b) {
                 return vec2(a.x*b, a.y*b);
@@ -165,6 +166,7 @@ Dst bit_cast(const Src& src) {
 }
 
 Float   cast  (U32 v) { return      __builtin_convertvector((I32)v,   Float); }
+Float   cast  (I32 v) { return      __builtin_convertvector((I32)v,   Float); }
 
     Float floor(Float v) {
     #if defined(JUMPER_IS_SSE41)
@@ -234,6 +236,12 @@ struct ivec2 {
                 return select(c1);
         }
 
+        ivec2 sel(XYZW c1, XYZW c2) {
+                return ivec2(select(c1), select(c2));
+        }
+
+
+
         ivec4 sel(XYZW c1, XYZW c2, XYZW c3, XYZW c4);
 
 
@@ -251,6 +259,8 @@ struct ivec2 {
         }
 
 };
+
+vec2::vec2(ivec2 a) : x(cast(a.x)), y(cast(a.y)) {}
 
 struct ivec3 {
         ivec3() { ivec3(0); }
@@ -298,6 +308,28 @@ SI ivec4 if_then_else(I32 c, ivec4 t, ivec4 e) {
                 if_then_else(c, t.z, e.z),
                 if_then_else(c, t.w, e.w));
 }
+
+struct bvec4 {
+        bvec4() { ivec4(0); }
+        bvec4(Bool a): x(a), y(a), z(a), w(a) {}
+        bvec4(Bool x, Bool y, Bool z, Bool w): x(x), y(y), z(z), w(w) {}
+        Bool& select(XYZW c) {
+                switch (c) {
+                    case X: return x;
+                    case Y: return y;
+                    case Z: return z;
+                    case W: return w;
+                }
+        }
+        Bool sel(XYZW c1) {
+                return select(c1);
+        }
+
+        Bool x;
+        Bool y;
+        Bool z;
+        Bool w;
+};
 
 
 struct vec3 {
@@ -487,6 +519,10 @@ struct vec4 {
         friend vec4 operator/(vec4 a, Float b) {
                 return vec4(a.x/b, a.y/b, a.z/b, a.w/b);
         }
+        friend vec4 operator/(vec4 a, vec4 b) {
+                return vec4(a.x/b.x, a.y/b.y, a.z/b.z, a.w/b.w);
+        }
+
 
         friend vec4 operator*(vec4 a, Float b) {
                 return vec4(a.x*b, a.y*b, a.z*b, a.w*b);
@@ -522,6 +558,12 @@ SI vec4 if_then_else(I32 c, vec4 t, vec4 e) {
                 if_then_else(c, t.w, e.w));
 }
 
+SI vec2 clamp(vec2 a, vec2 minVal, vec2 maxVal) {
+    return vec2(clamp(a.x, minVal.x, maxVal.x),
+                clamp(a.y, minVal.y, maxVal.y));
+}
+
+
 SI vec3 clamp(vec3 a, vec3 minVal, vec3 maxVal) {
     return vec3(clamp(a.x, minVal.x, maxVal.x),
                 clamp(a.y, minVal.y, maxVal.y),
@@ -535,8 +577,15 @@ SI vec4 clamp(vec4 a, vec4 minVal, vec4 maxVal) {
                 clamp(a.w, minVal.w, maxVal.w));
 }
 
+struct sampler2DArray_impl {
+        uint32_t *buf;
+        uint32_t stride;
+        uint32_t height;
+        uint32_t width;
+};
 
-struct sampler2DArray {};
+
+typedef sampler2DArray_impl *sampler2DArray;
 
 struct sampler2D_impl {
         uint32_t *buf;
@@ -662,13 +711,62 @@ vec4 texture(sampler2D sampler, vec3 P) {
         ivec2 coord(round(P.x, sampler->width), round(P.y, sampler->height));
         return texelFetch(sampler, coord, 0);
 }
+
+ivec2 textureSize(sampler2DArray sampler, int) {
+        return ivec2(sampler->width, sampler->height);
+}
+
  ivec4 ivec2::sel(XYZW c1, XYZW c2, XYZW c3, XYZW c4)
         {
-                return ivec4(select(c1));
+                return ivec4(select(c1), select(c2), select(c3), select(c4));
         }
 
+vec4 vec2::sel(XYZW c1, XYZW c2, XYZW c3, XYZW c4)
+        {
+                return vec4(select(c1), select(c2), select(c3), select(c4));
+        }
+
+template <typename T>
+SI T mix(T x, T y, Float a) {
+        return (x - y) * a + x;
+}
+
+//XXX: having this version helps
+//for arguments like mix(Float, double, Float)
+template <typename T>
+SI T mix(T x, Float y, Float a) {
+        return (x - y) * a + x;
+}
+
+SI vec4 if_then_else(bvec4 c, vec4 t, vec4 e) {
+    return vec4(if_then_else(c.x, t.x, e.x),
+                if_then_else(c.y, t.y, e.y),
+                if_then_else(c.z, t.z, e.z),
+                if_then_else(c.w, t.w, e.w));
+}
 
 
+SI vec4 mix(vec4 x, vec4 y, bvec4 a) {
+        return if_then_else(a, x, y);
+}
+
+template <typename T>
+SI T mix(T x, T y, T a) {
+        return (x - y) * a + x;
+}
+
+Float dot(vec3 a, vec3 b) {
+        return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+Float sin(Float x) {
+        assert(false);
+        return Float(0);
+}
+Float cos(Float x) {
+        assert(false);
+        return Float(0);
+}
 // See lp_build_sample_soa_code(
 // lp_build_sample_aos used for common cases
 // lp_build_sample_image_linear for an actual mip
