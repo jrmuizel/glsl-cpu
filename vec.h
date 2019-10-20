@@ -213,6 +213,7 @@ Float pow(Float x, Float y) {
                                          , approx_pow2(approx_log2(x) * y));
 }
 
+struct ivec4;
 
 struct ivec2 {
         ivec2() { ivec2(0); }
@@ -232,6 +233,9 @@ struct ivec2 {
         I32 sel(XYZW c1) {
                 return select(c1);
         }
+
+        ivec4 sel(XYZW c1, XYZW c2, XYZW c3, XYZW c4);
+
 
         ivec2 operator*=(I32 a) {
                 x *= a;
@@ -491,6 +495,18 @@ struct vec4 {
         friend vec4 operator*(Float b, vec4 a) {
                 return vec4(a.x*b, a.y*b, a.z*b, a.w*b);
         }
+        friend vec4 operator*(vec4 a, vec4 b) {
+                return vec4(a.x*b.x, a.y*b.y, a.z*b.z, a.w*b.w);
+        }
+
+        friend vec4 operator-(vec4 a, vec4 b) {
+                return vec4(a.x-b.x, a.y-b.y, a.z-b.z, a.w-b.w);
+        }
+        friend vec4 operator+(vec4 a, vec4 b) {
+                return vec4(a.x+b.x, a.y+b.y, a.z+b.z, a.w+b.w);
+        }
+
+
 
 
         Float x;
@@ -646,6 +662,11 @@ vec4 texture(sampler2D sampler, vec3 P) {
         ivec2 coord(round(P.x, sampler->width), round(P.y, sampler->height));
         return texelFetch(sampler, coord, 0);
 }
+ ivec4 ivec2::sel(XYZW c1, XYZW c2, XYZW c3, XYZW c4)
+        {
+                return ivec4(select(c1));
+        }
+
 
 
 // See lp_build_sample_soa_code(
