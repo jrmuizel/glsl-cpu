@@ -24,6 +24,10 @@ using Bool = V<int>;
 struct vec4;
 struct ivec2;
 
+SI Float if_then_else(I32 c, float t, float e) {
+    return _mm_or_ps(_mm_and_ps(c, Float(t)), _mm_andnot_ps(c, Float(e)));
+}
+
 SI Float if_then_else(I32 c, Float t, Float e) {
     return _mm_or_ps(_mm_and_ps(c, t), _mm_andnot_ps(c, e));
 }
@@ -294,6 +298,10 @@ struct ivec4 {
 
         ivec3 sel(XYZW c1, XYZW c2, XYZW c3) {
                 return ivec3(select(c1), select(c2), select(c3));
+        }
+
+        friend ivec4 operator&(I32 a, ivec4 b) {
+                return ivec4(a&b.x, a&b.y, a&b.z, a&b.w);
         }
 
         I32 x;
@@ -613,6 +621,11 @@ struct mat3 {
         vec3& operator[](int index) {
                 return data[index];
         }
+        mat3() {
+                data[0] = vec3();
+                data[1] = vec3();
+                data[2] = vec3();
+        }
         mat3(vec3 a, vec3 b, vec3 c) {
                 data[0] = a;
                 data[1] = b;
@@ -652,6 +665,13 @@ mat3::mat3(mat4 &mat) : mat3(vec3(mat[0].x, mat[0].y, mat[0].z),
                     vec3(mat[1].x, mat[1].y, mat[1].z),
                     vec3(mat[2].x, mat[2].y, mat[2].z)) {
 }
+
+SI mat3 if_then_else(I32 c, mat3 t, mat3 e) {
+    return mat3{if_then_else(c, t[0], e[0]),
+                if_then_else(c, t[1], e[1]),
+                if_then_else(c, t[2], e[2])};
+}
+
 
 SI mat4 if_then_else(I32 c, mat4 t, mat4 e) {
     return mat4{if_then_else(c, t[0], e[0]),
@@ -766,6 +786,16 @@ Float sin(Float x) {
 Float cos(Float x) {
         assert(false);
         return Float(0);
+}
+
+bvec4 notEqual(ivec4 a, ivec4 b) {
+        return bvec4(a.x != b.x, a.y != b.y, a.z != b.z, a.w != b.w);
+}
+
+mat3 transpose(mat3 m) {
+        return mat3(vec3(m[0].x, m[1].x, m[2].x),
+                    vec3(m[0].y, m[1].y, m[2].y),
+                    vec3(m[0].z, m[1].z, m[2].z));
 }
 // See lp_build_sample_soa_code(
 // lp_build_sample_aos used for common cases
