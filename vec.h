@@ -49,6 +49,11 @@ SI Float sqrt(Float x) {
         return _mm_sqrt_ps(x);
 }
 
+SI Float inversesqrt(Float x) {
+        return 1./_mm_sqrt_ps(x);
+}
+
+
 
 SI Float step(Float edge, Float x) {
         return if_then_else(x < edge, Float(0), Float(1));
@@ -152,6 +157,16 @@ vec2 max(vec2 a, vec2 b) {
 Float length(vec2 a) {
        return sqrt(a.x*a.x+a.y*a.y);
 }
+
+SI Float distance(vec2 a, vec2 b) {
+        return length(a - b);
+}
+
+SI vec2 normalize(vec2 a) {
+        return a / length(a);
+}
+
+
 Float abs(Float v) {
         return _mm_and_ps(v, 0-v);
 }
@@ -317,6 +332,25 @@ SI ivec4 if_then_else(I32 c, ivec4 t, ivec4 e) {
                 if_then_else(c, t.w, e.w));
 }
 
+struct bvec2 {
+        bvec2() { ivec4(0); }
+        bvec2(Bool a): x(a), y(a) {}
+        bvec2(Bool x, Bool y): x(x), y(y) {}
+        Bool& select(XYZW c) {
+                switch (c) {
+                    case X: return x;
+                    case Y: return y;
+                }
+        }
+        Bool sel(XYZW c1) {
+                return select(c1);
+        }
+
+        Bool x;
+        Bool y;
+};
+
+
 struct bvec4 {
         bvec4() { ivec4(0); }
         bvec4(Bool a): x(a), y(a), z(a), w(a) {}
@@ -409,15 +443,30 @@ SI vec3 if_then_else(ivec3 c, vec3 t, vec3 e) {
                 if_then_else(c.z, t.z, e.z));
 }
 
-I32 lessThanEqual(Float x, Float y) {
+Bool lessThanEqual(Float x, Float y) {
         return x <= y;
 }
+
+Bool lessThan(Float x, Float y) {
+        return x < y;
+}
+
 
 
 SI ivec3 lessThanEqual(vec3 x, vec3 y) {
     return ivec3(lessThanEqual(x.x, y.x),
                  lessThanEqual(x.y, y.y),
                  lessThanEqual(x.z, y.z));
+}
+
+SI bvec2 lessThanEqual(vec2 x, vec2 y) {
+    return bvec2(lessThan(x.x, y.x),
+                 lessThan(x.y, y.y));
+}
+
+SI bvec2 lessThan(vec2 x, vec2 y) {
+    return bvec2(lessThan(x.x, y.x),
+                 lessThan(x.y, y.y));
 }
 
 
@@ -758,6 +807,21 @@ SI T mix(T x, Float y, Float a) {
         return (x - y) * a + x;
 }
 
+Bool any(bvec4 x) {
+        return x.x | x.y | x.z | x.w;
+}
+
+Bool any(bvec2 x) {
+        return x.x | x.y;
+}
+
+Bool all(bvec2 x) {
+        return x.x & x.y;
+}
+
+
+
+
 SI vec4 if_then_else(bvec4 c, vec4 t, vec4 e) {
     return vec4(if_then_else(c.x, t.x, e.x),
                 if_then_else(c.y, t.y, e.y),
@@ -778,6 +842,11 @@ SI T mix(T x, T y, T a) {
 Float dot(vec3 a, vec3 b) {
         return a.x * b.x + a.y * b.y + a.z * b.z;
 }
+
+Float dot(vec2 a, vec2 b) {
+        return a.x * b.x + a.y * b.y;
+}
+
 
 Float sin(Float x) {
         assert(false);
