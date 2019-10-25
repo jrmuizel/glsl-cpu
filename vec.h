@@ -337,7 +337,7 @@ SI ivec4 if_then_else(I32 c, ivec4 t, ivec4 e) {
 }
 
 struct bvec2 {
-        bvec2() { ivec4(0); }
+        bvec2() { }
         bvec2(Bool a): x(a), y(a) {}
         bvec2(Bool x, Bool y): x(x), y(y) {}
         Bool& select(XYZW c) {
@@ -352,6 +352,26 @@ struct bvec2 {
 
         Bool x;
         Bool y;
+};
+
+struct bvec3 {
+        bvec3() { }
+        bvec3(Bool a): x(a), y(a), z(a) {}
+        bvec3(Bool x, Bool y, Bool z): x(x), y(y), z(z) {}
+        Bool& select(XYZW c) {
+                switch (c) {
+                    case X: return x;
+                    case Y: return y;
+                    case Z: return z;
+                }
+        }
+        Bool sel(XYZW c1) {
+                return select(c1);
+        }
+
+        Bool x;
+        Bool y;
+        Bool z;
 };
 
 
@@ -641,6 +661,11 @@ SI bvec2 lessThan(vec2 x, vec2 y) {
 Bool greaterThan(Float x, Float y) {
         return x > y;
 }
+bvec2 greaterThan(vec2 x, vec2 y) {
+        return bvec2(greaterThan(x.x, y.x),
+                     greaterThan(x.y, y.y));
+}
+
 
 
 Bool greaterThanEqual(Float x, Float y) {
@@ -861,6 +886,11 @@ SI T mix(T x, Float y, Float a) {
         return (x - y) * a + x;
 }
 
+SI Float mix(Float x, Float y, Float a) {
+        return (x - y) * a + x;
+}
+
+
 Bool any(bvec4 x) {
         return x.x | x.y | x.z | x.w;
 }
@@ -886,6 +916,12 @@ SI vec4 if_then_else(bvec4 c, vec4 t, vec4 e) {
                 if_then_else(c.z, t.z, e.z),
                 if_then_else(c.w, t.w, e.w));
 }
+SI vec3 if_then_else(bvec3 c, vec3 t, vec3 e) {
+    return vec3(if_then_else(c.x, t.x, e.x),
+                if_then_else(c.y, t.y, e.y),
+                if_then_else(c.z, t.z, e.z));
+}
+
 
 SI vec2 if_then_else(bvec2 c, vec2 t, vec2 e) {
     return vec2(if_then_else(c.x, t.x, e.x),
@@ -897,6 +933,10 @@ SI vec2 if_then_else(bvec2 c, vec2 t, vec2 e) {
 SI vec4 mix(vec4 x, vec4 y, bvec4 a) {
         return if_then_else(a, x, y);
 }
+SI vec3 mix(vec3 x, vec3 y, bvec3 a) {
+        return if_then_else(a, x, y);
+}
+
 
 SI vec2 mix(vec2 x, vec2 y, bvec2 a) {
         return if_then_else(a, x, y);
