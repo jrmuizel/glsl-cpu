@@ -118,6 +118,9 @@ struct vec2 {
                 return *this;
         }
 
+        vec2 operator-() {
+                return vec2(-x, -y);
+        }
 
         friend vec2 operator*(vec2 a, Float b) {
                 return vec2(a.x*b, a.y*b);
@@ -285,6 +288,7 @@ struct ivec3 {
         ivec3() { ivec3(0); }
         ivec3(I32 a): x(a), y(a), z(a) {}
         ivec3(I32 x, I32 y, I32 z): x(x), y(y), z(z) {}
+        ivec3(ivec2 a, I32 b): x(a.x), y(a.y), z(b) {}
         I32 x;
         I32 y;
         I32 z;
@@ -355,6 +359,7 @@ struct bvec4 {
         bvec4() { ivec4(0); }
         bvec4(Bool a): x(a), y(a), z(a), w(a) {}
         bvec4(Bool x, Bool y, Bool z, Bool w): x(x), y(y), z(z), w(w) {}
+        bvec4(bvec2 x, bvec2 y): x(x.x), y(x.y), z(y.x), w(y.y) {}
         Bool& select(XYZW c) {
                 switch (c) {
                     case X: return x;
@@ -442,33 +447,6 @@ SI vec3 if_then_else(ivec3 c, vec3 t, vec3 e) {
                 if_then_else(c.y, t.y, e.y),
                 if_then_else(c.z, t.z, e.z));
 }
-
-Bool lessThanEqual(Float x, Float y) {
-        return x <= y;
-}
-
-Bool lessThan(Float x, Float y) {
-        return x < y;
-}
-
-
-
-SI ivec3 lessThanEqual(vec3 x, vec3 y) {
-    return ivec3(lessThanEqual(x.x, y.x),
-                 lessThanEqual(x.y, y.y),
-                 lessThanEqual(x.z, y.z));
-}
-
-SI bvec2 lessThanEqual(vec2 x, vec2 y) {
-    return bvec2(lessThan(x.x, y.x),
-                 lessThan(x.y, y.y));
-}
-
-SI bvec2 lessThan(vec2 x, vec2 y) {
-    return bvec2(lessThan(x.x, y.x),
-                 lessThan(x.y, y.y));
-}
-
 
 
 
@@ -633,6 +611,49 @@ SI vec4 clamp(vec4 a, vec4 minVal, vec4 maxVal) {
                 clamp(a.z, minVal.z, maxVal.z),
                 clamp(a.w, minVal.w, maxVal.w));
 }
+Bool lessThanEqual(Float x, Float y) {
+        return x <= y;
+}
+
+Bool lessThan(Float x, Float y) {
+        return x < y;
+}
+
+
+
+
+SI ivec3 lessThanEqual(vec3 x, vec3 y) {
+    return ivec3(lessThanEqual(x.x, y.x),
+                 lessThanEqual(x.y, y.y),
+                 lessThanEqual(x.z, y.z));
+}
+
+SI bvec2 lessThanEqual(vec2 x, vec2 y) {
+    return bvec2(lessThan(x.x, y.x),
+                 lessThan(x.y, y.y));
+}
+
+SI bvec2 lessThan(vec2 x, vec2 y) {
+    return bvec2(lessThan(x.x, y.x),
+                 lessThan(x.y, y.y));
+}
+
+Bool greaterThan(Float x, Float y) {
+        return x > y;
+}
+
+
+Bool greaterThanEqual(Float x, Float y) {
+        return x >= y;
+}
+
+bvec4 greaterThanEqual(vec4 x, vec4 y) {
+        return bvec4(greaterThanEqual(x.x, y.x),
+                    greaterThanEqual(x.y, y.y),
+                    greaterThanEqual(x.z, y.z),
+                    greaterThanEqual(x.w, y.w));
+}
+
 
 struct sampler2DArray_impl {
         uint32_t *buf;
@@ -663,6 +684,36 @@ struct isampler2D_impl {
 typedef isampler2D_impl *isampler2D;
 
 struct mat4;
+
+struct mat2 {
+        vec2 data[];
+
+        vec2& operator[](int index) {
+                return data[index];
+        }
+        mat2() {
+                data[0] = vec2();
+                data[1] = vec2();
+        }
+
+        mat2(float a) {
+                data[0] = vec2(a);
+                data[1] = vec2(a);
+        }
+
+        mat2(vec2 a, vec2 b) {
+                data[0] = a;
+                data[1] = b;
+        }
+        mat2(mat4 &mat);
+        friend vec2 operator*(mat2 m, vec2 v) {
+                vec2 u;
+                u.x = m[0].x * v.x + m[1].x * v.y;
+                u.y = m[0].y * v.x + m[1].y * v.y;
+                return u;
+        }
+};
+
 
 struct mat3 {
         vec3 data[3];
@@ -715,6 +766,9 @@ mat3::mat3(mat4 &mat) : mat3(vec3(mat[0].x, mat[0].y, mat[0].z),
                     vec3(mat[2].x, mat[2].y, mat[2].z)) {
 }
 
+mat2::mat2(mat4 &mat) : mat2(vec2(mat[0].x, mat[0].y),
+                    vec2(mat[1].x, mat[1].y)) {
+}
 SI mat3 if_then_else(I32 c, mat3 t, mat3 e) {
     return mat3{if_then_else(c, t[0], e[0]),
                 if_then_else(c, t[1], e[1]),
@@ -818,6 +872,10 @@ Bool any(bvec2 x) {
 Bool all(bvec2 x) {
         return x.x & x.y;
 }
+Bool all(bvec4 x) {
+        return x.x & x.y & x.z & x.w;
+}
+
 
 
 
@@ -829,8 +887,18 @@ SI vec4 if_then_else(bvec4 c, vec4 t, vec4 e) {
                 if_then_else(c.w, t.w, e.w));
 }
 
+SI vec2 if_then_else(bvec2 c, vec2 t, vec2 e) {
+    return vec2(if_then_else(c.x, t.x, e.x),
+                if_then_else(c.y, t.y, e.y));
+}
+
+
 
 SI vec4 mix(vec4 x, vec4 y, bvec4 a) {
+        return if_then_else(a, x, y);
+}
+
+SI vec2 mix(vec2 x, vec2 y, bvec2 a) {
         return if_then_else(a, x, y);
 }
 
@@ -866,6 +934,15 @@ mat3 transpose(mat3 m) {
                     vec3(m[0].y, m[1].y, m[2].y),
                     vec3(m[0].z, m[1].z, m[2].z));
 }
+
+vec2 floor(vec2 v) {
+        return vec2(floor(v.x), floor(v.y));
+}
+
+vec2 abs(vec2 v) {
+        return vec2(abs(v.x), abs(v.y));
+}
+
 // See lp_build_sample_soa_code(
 // lp_build_sample_aos used for common cases
 // lp_build_sample_image_linear for an actual mip
