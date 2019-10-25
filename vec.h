@@ -95,6 +95,11 @@ struct bvec2 {
                 return select(c1);
         }
 
+        bvec2 operator~() {
+                return bvec2(~x, ~y);
+        }
+
+
         Bool x;
         Bool y;
 };
@@ -118,6 +123,10 @@ struct vec2 {
         Float sel(XYZW c1) {
                 return select(c1);
         }
+        Float sel(XYZW c1, XYZW c2) {
+                return vec2(select(c1), select(c2));
+        }
+
         vec4 sel(XYZW c1, XYZW c2, XYZW c3, XYZW c4);
 
         vec2 operator*=(Float a) {
@@ -141,9 +150,9 @@ struct vec2 {
                 return vec2(-x, -y);
         }
 
-        friend bvec2 operator==(const vec2& l, const vec2& r)
+        friend I32 operator==(const vec2& l, const vec2& r)
         {
-                return bvec2(l.x == r.x, l.y == r.y);
+                return l.x == r.x && l.y == r.y;
         }
 
         friend vec2 operator*(vec2 a, Float b) {
@@ -166,7 +175,7 @@ struct vec2 {
 
 };
 
-SI vec2   min(vec2 a, vec2 b)       { return vec2(min(a.x, b.x), min(a.y, b.y));    }
+SI vec2 min(vec2 a, vec2 b)       { return vec2(min(a.x, b.x), min(a.y, b.y));    }
 
 SI vec2 if_then_else(I32 c, vec2 t, vec2 e) {
     return vec2(if_then_else(c, t.x, e.x),
@@ -185,6 +194,8 @@ std::array<vec2, SIZE> if_then_else(I32 c, std::array<vec2, SIZE> t, std::array<
 vec2 step(vec2 edge, vec2 x) {
        return vec2(step(edge.x, x.x), step(edge.y, x.y));
 }
+
+
 
 vec2 max(vec2 a, vec2 b) {
        return vec2(max(a.x, b.x), max(a.y, b.y));
@@ -288,7 +299,7 @@ struct ivec2 {
                     case Y: return y;
                 }
         }
-        I32 sel(XYZW c1) {
+        I32& sel(XYZW c1) {
                 return select(c1);
         }
 
@@ -437,7 +448,7 @@ struct vec3 {
                     case Z: return z;
                 }
         }
-        Float sel(XYZW c1) {
+        Float& sel(XYZW c1) {
                 return select(c1);
         }
 
@@ -491,8 +502,14 @@ SI vec3 if_then_else(ivec3 c, vec3 t, vec3 e) {
 }
 
 
+vec3 step(vec3 edge, vec3 x) {
+       return vec3(step(edge.x, x.x), step(edge.y, x.y), step(edge.z, x.z));
+}
 
 
+
+SI vec3 min(vec3 a, vec3 b)       { return vec3(min(a.x, b.x), min(a.y, b.y), min(a.z, b.z));    }
+SI vec3 max(vec3 a, vec3 b)       { return vec3(max(a.x, b.x), max(a.y, b.y), max(a.z, b.z));    }
 
 vec3 pow(vec3 x, vec3 y) {
     return vec3(pow(x.x, y.x), pow(x.y, y.y), pow(x.z, y.z));
@@ -534,7 +551,7 @@ struct vec4 {
                     case W: return w;
                 }
         }
-        Float sel(XYZW c1) {
+        Float& sel(XYZW c1) {
                 return select(c1);
         }
 
@@ -888,6 +905,10 @@ vec4 texelFetch(sampler2D sampler, ivec2 P, int lod) {
                       fetchPixel(sampler, P.x.w, P.y.w)
                       );
 }
+vec4 texelFetch(sampler2DArray sampler, ivec3 P, int lod) {
+        assert(0); // handle P.
+        return vec4();
+}
 
 ivec4 texelFetch(isampler2D sampler, ivec2 P, int lod) {
         return ivec4(
@@ -903,6 +924,13 @@ vec4 texture(sampler2D sampler, vec3 P) {
         ivec2 coord(round(P.x, sampler->width), round(P.y, sampler->height));
         return texelFetch(sampler, coord, 0);
 }
+
+vec4 texture(sampler2DArray sampler, vec3 P, Float layer) {
+        assert(0);
+        return vec4();
+}
+
+
 
 ivec2 textureSize(sampler2DArray sampler, int) {
         return ivec2(sampler->width, sampler->height);
