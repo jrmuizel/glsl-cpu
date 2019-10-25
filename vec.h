@@ -81,6 +81,25 @@ enum XYZW {
         A = 3,
 };
 
+struct bvec2 {
+        bvec2() { }
+        bvec2(Bool a): x(a), y(a) {}
+        bvec2(Bool x, Bool y): x(x), y(y) {}
+        Bool& select(XYZW c) {
+                switch (c) {
+                    case X: return x;
+                    case Y: return y;
+                }
+        }
+        Bool sel(XYZW c1) {
+                return select(c1);
+        }
+
+        Bool x;
+        Bool y;
+};
+
+
 
 struct vec2 {
         vec2() { vec2(0); }
@@ -122,6 +141,11 @@ struct vec2 {
                 return vec2(-x, -y);
         }
 
+        friend bvec2 operator==(const vec2& l, const vec2& r)
+        {
+                return bvec2(l.x == r.x, l.y == r.y);
+        }
+
         friend vec2 operator*(vec2 a, Float b) {
                 return vec2(a.x*b, a.y*b);
         }
@@ -147,6 +171,15 @@ SI vec2   min(vec2 a, vec2 b)       { return vec2(min(a.x, b.x), min(a.y, b.y));
 SI vec2 if_then_else(I32 c, vec2 t, vec2 e) {
     return vec2(if_then_else(c, t.x, e.x),
                 if_then_else(c, t.y, e.y));
+}
+
+template <size_t SIZE=4>
+std::array<vec2, SIZE> if_then_else(I32 c, std::array<vec2, SIZE> t, std::array<vec2, SIZE> e) {
+    std::array<vec2, SIZE> r;
+    for(size_t i = 0; i < SIZE; i++) {
+        r[i] = if_then_else(c, t[i], e[i]);
+    }
+    return r;
 }
 
 vec2 step(vec2 edge, vec2 x) {
@@ -189,6 +222,7 @@ Dst bit_cast(const Src& src) {
 
 Float   cast  (U32 v) { return      __builtin_convertvector((I32)v,   Float); }
 Float   cast  (I32 v) { return      __builtin_convertvector((I32)v,   Float); }
+I32   cast  (Float v) { return      __builtin_convertvector(v,   I32); }
 
     Float floor(Float v) {
     #if defined(JUMPER_IS_SSE41)
@@ -294,6 +328,7 @@ struct ivec3 {
         ivec3(I32 a): x(a), y(a), z(a) {}
         ivec3(I32 x, I32 y, I32 z): x(x), y(y), z(z) {}
         ivec3(ivec2 a, I32 b): x(a.x), y(a.y), z(b) {}
+        ivec3(vec2 a, Float b): x(cast(a.x)), y(cast(a.y)), z(cast(b)) {}
         I32 x;
         I32 y;
         I32 z;
@@ -340,24 +375,6 @@ SI ivec4 if_then_else(I32 c, ivec4 t, ivec4 e) {
                 if_then_else(c, t.z, e.z),
                 if_then_else(c, t.w, e.w));
 }
-
-struct bvec2 {
-        bvec2() { }
-        bvec2(Bool a): x(a), y(a) {}
-        bvec2(Bool x, Bool y): x(x), y(y) {}
-        Bool& select(XYZW c) {
-                switch (c) {
-                    case X: return x;
-                    case Y: return y;
-                }
-        }
-        Bool sel(XYZW c1) {
-                return select(c1);
-        }
-
-        Bool x;
-        Bool y;
-};
 
 struct bvec3 {
         bvec3() { }
@@ -652,8 +669,8 @@ Bool lessThan(Float x, Float y) {
 
 
 
-SI ivec3 lessThanEqual(vec3 x, vec3 y) {
-    return ivec3(lessThanEqual(x.x, y.x),
+SI bvec3 lessThanEqual(vec3 x, vec3 y) {
+    return bvec3(lessThanEqual(x.x, y.x),
                  lessThanEqual(x.y, y.y),
                  lessThanEqual(x.z, y.z));
 }
