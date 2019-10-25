@@ -623,6 +623,11 @@ SI vec2 clamp(vec2 a, vec2 minVal, vec2 maxVal) {
                 clamp(a.y, minVal.y, maxVal.y));
 }
 
+SI I32 clamp(I32 a, I32 minVal, I32 maxVal) {
+    assert(0); // does this work?
+    a = if_then_else(a < minVal, minVal, a);
+    return if_then_else(a > maxVal, maxVal, a);
+}
 
 SI vec3 clamp(vec3 a, vec3 minVal, vec3 maxVal) {
     return vec3(clamp(a.x, minVal.x, maxVal.x),
@@ -654,9 +659,17 @@ SI ivec3 lessThanEqual(vec3 x, vec3 y) {
 }
 
 SI bvec2 lessThanEqual(vec2 x, vec2 y) {
-    return bvec2(lessThan(x.x, y.x),
-                 lessThan(x.y, y.y));
+    return bvec2(lessThanEqual(x.x, y.x),
+                 lessThanEqual(x.y, y.y));
 }
+
+SI bvec4 lessThanEqual(vec4 x, vec4 y) {
+    return bvec4(lessThanEqual(x.x, y.x),
+                 lessThanEqual(x.y, y.y),
+                 lessThanEqual(x.z, y.z),
+                 lessThanEqual(x.w, y.w));
+}
+
 
 SI bvec2 lessThan(vec2 x, vec2 y) {
     return bvec2(lessThan(x.x, y.x),
@@ -742,6 +755,15 @@ struct mat2 {
                 u.y = m[0].y * v.x + m[1].y * v.y;
                 return u;
         }
+        friend mat2 operator*(mat2 m, Float f) {
+                mat2 u = m;
+                u[0].x *= f;
+                u[0].y *= f;
+                u[1].x *= f;
+                u[1].y *= f;
+                return u;
+        }
+
 };
 
 
@@ -988,7 +1010,7 @@ vec2 abs(vec2 v) {
         return vec2(abs(v.x), abs(v.y));
 }
 vec3 abs(vec3 v) {
-        return vec3(abs(v.x), abs(v.y), abs(v.z);
+        return vec3(abs(v.x), abs(v.y), abs(v.z));
 }
 
 
