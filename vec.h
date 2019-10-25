@@ -272,6 +272,11 @@ struct ivec2 {
                 y *= a;
                 return *this;
         }
+        ivec2 operator+=(ivec2 a) {
+                x += a.x;
+                y += a.y;
+                return *this;
+        }
 
         friend ivec2 operator*(ivec2 a, I32 b) {
                 return ivec2(a.x*b, a.y*b);
@@ -982,6 +987,10 @@ vec2 floor(vec2 v) {
 vec2 abs(vec2 v) {
         return vec2(abs(v.x), abs(v.y));
 }
+vec3 abs(vec3 v) {
+        return vec3(abs(v.x), abs(v.y), abs(v.z);
+}
+
 
 // See lp_build_sample_soa_code(
 // lp_build_sample_aos used for common cases
