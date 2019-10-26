@@ -120,10 +120,10 @@ struct vec2 {
                     case Y: return y;
                 }
         }
-        Float sel(XYZW c1) {
+        Float& sel(XYZW c1) {
                 return select(c1);
         }
-        Float sel(XYZW c1, XYZW c2) {
+        vec2 sel(XYZW c1, XYZW c2) {
                 return vec2(select(c1), select(c2));
         }
 
@@ -134,6 +134,24 @@ struct vec2 {
                 y *= a;
                 return *this;
         }
+        vec2 operator*=(vec2 a) {
+                x *= a.x;
+                y *= a.y;
+                return *this;
+        }
+
+        vec2 operator/=(Float a) {
+                x /= a;
+                y /= a;
+                return *this;
+        }
+        vec2 operator/=(vec2 a) {
+                x /= a.x;
+                y /= a.y;
+                return *this;
+        }
+
+
 
         vec2 operator+=(vec2 a) {
                 x += a.x;
@@ -289,6 +307,7 @@ struct ivec2 {
         ivec2(I32 a): x(a), y(a) {}
         ivec2(int x, int y): x(x), y(y) {}
         ivec2(I32 x, I32 y): x(x), y(y) {}
+        ivec2(vec2 a): x(cast(a.x)), y(cast(a.y)) {}
         ivec2(U32 x, U32 y): x(__builtin_convertvector(x, I32)), y(__builtin_convertvector(y, I32)) {}
         I32 x;
         I32 y;
@@ -326,6 +345,10 @@ struct ivec2 {
         friend ivec2 operator*(ivec2 a, I32 b) {
                 return ivec2(a.x*b, a.y*b);
         }
+        friend ivec2 operator&(ivec2 a, ivec2 b) {
+                return ivec2(a.x&b.x, a.y&b.y);
+        }
+
         friend ivec2 operator+(ivec2 a, ivec2 b) {
                 return ivec2(a.x*b.x, a.y*b.y);
         }
@@ -350,6 +373,7 @@ struct ivec4 {
         ivec4() { ivec4(0); }
         ivec4(I32 a): x(a), y(a), z(a), w(a) {}
         ivec4(I32 x, I32 y, I32 z, I32 w): x(x), y(y), z(z), w(w) {}
+        ivec4(ivec2 a, I32 b, I32 c): x(a.x), y(a.y), z(b), w(c) {}
         I32& select(XYZW c) {
                 switch (c) {
                     case X: return x;
@@ -379,6 +403,12 @@ struct ivec4 {
         I32 z;
         I32 w;
 };
+
+SI ivec2 if_then_else(I32 c, ivec2 t, ivec2 e) {
+    return ivec2(if_then_else(c, t.x, e.x),
+                if_then_else(c, t.y, e.y));
+}
+
 
 SI ivec4 if_then_else(I32 c, ivec4 t, ivec4 e) {
     return ivec4(if_then_else(c, t.x, e.x),
@@ -431,6 +461,32 @@ struct bvec4 {
         Bool w;
 };
 
+struct vec2_ref {
+        vec2_ref(Float &x, Float &y) : x(x), y(y) {
+        }
+        Float &x;
+        Float &y;
+        vec2_ref& operator=(const vec2 &a) {
+                x = a.x;
+                y = a.y;
+                return *this;
+        }
+
+        vec2_ref& operator/=(Float a) {
+                x /= a;
+                y /= a;
+                return *this;
+        }
+
+        vec2_ref& operator/=(vec2 a) {
+                x /= a.x;
+                y /= a.y;
+                return *this;
+        }
+
+};
+
+
 
 struct vec3 {
         vec3() { vec3(0); }
@@ -460,6 +516,11 @@ struct vec3 {
                 return vec3(select(c1), select(c2), select(c3));
         }
 
+        vec2_ref lsel(XYZW c1, XYZW c2) {
+                return vec2_ref(select(c1), select(c2));
+        }
+
+
         friend vec3 operator*(vec3 a, Float b) {
                 return vec3(a.x*b, a.y*b, a.z*b);
         }
@@ -470,6 +531,12 @@ struct vec3 {
         friend vec3 operator/(vec3 a, Float b) {
                 return vec3(a.x/b, a.y/b, a.z/b);
         }
+
+        friend I32 operator==(const vec3& l, const vec3& r)
+        {
+                return l.x == r.x && l.y == r.y && l.z == r.z;
+        }
+
 
 
         friend vec3 operator-(vec3 a, Float b) {
@@ -533,6 +600,23 @@ struct vec3_ref {
                 return *this;
         }
 
+        vec3_ref& operator/=(Float a) {
+                x /= a;
+                y /= a;
+                z /= a;
+                return *this;
+        }
+
+        vec3_ref& operator*=(Float a) {
+                x *= a;
+                y *= a;
+                z *= a;
+                return *this;
+        }
+
+
+
+
 
 };
 
@@ -565,6 +649,11 @@ struct vec4 {
         vec3_ref lsel(XYZW c1, XYZW c2, XYZW c3) {
                 return vec3_ref(select(c1), select(c2), select(c3));
         }
+
+        vec2_ref lsel(XYZW c1, XYZW c2) {
+                return vec2_ref(select(c1), select(c2));
+        }
+
 
         Float& operator[](int index) {
                 switch (index) {
@@ -636,7 +725,20 @@ struct vec4 {
                 return vec4(a.x+b.x, a.y+b.y, a.z+b.z, a.w+b.w);
         }
 
-
+        vec4& operator/=(vec4 a) {
+                x /= a.x;
+                y /= a.y;
+                z /= a.z;
+                w /= a.w;
+                return *this;
+        }
+        vec4& operator*=(Float a) {
+                x *= a;
+                y *= a;
+                z *= a;
+                w *= a;
+                return *this;
+        }
 
 
         Float x;
@@ -800,6 +902,12 @@ struct mat2 {
 
 };
 
+SI mat2 if_then_else(I32 c, mat2 t, mat2 e) {
+    return mat2(if_then_else(c, t[0], e[0]),
+                if_then_else(c, t[0], e[1]));
+}
+
+
 
 struct mat3 {
         vec3 data[3];
@@ -817,6 +925,13 @@ struct mat3 {
                 data[1] = b;
                 data[2] = c;
         }
+
+        mat3(Float d1, Float d2, Float d3, Float d4, Float d5, Float d6, Float d7, Float d8, Float d9) {
+                data[0] = vec3(d1, d2, d3);
+                data[1] = vec3(d4, d5, d6);
+                data[2] = vec3(d7, d8, d9);
+        }
+
 
         mat3(mat4 &mat);
 
@@ -929,6 +1044,11 @@ vec4 texture(sampler2DArray sampler, vec3 P, Float layer) {
         assert(0);
         return vec4();
 }
+vec4 texture(sampler2DArray sampler, vec3 P) {
+        assert(0);
+        return vec4();
+}
+
 
 
 
@@ -1054,8 +1174,23 @@ vec2 floor(vec2 v) {
 vec2 abs(vec2 v) {
         return vec2(abs(v.x), abs(v.y));
 }
+
+Float mod(Float a, Float b) {
+        assert(0);
+        return a;
+}
+
+vec2 mod(vec2 a, vec2 b) {
+        return vec2(mod(a.x, b.x), mod(a.y, a.y));
+}
+
 vec3 abs(vec3 v) {
         return vec3(abs(v.x), abs(v.y), abs(v.z));
+}
+
+mat2 inverse(mat2 v) {
+        assert(0);
+        return mat2();
 }
 
 
