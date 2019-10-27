@@ -184,6 +184,11 @@ struct vec2 {
                 return l.x == r.x && l.y == r.y;
         }
 
+        friend I32 operator!=(const vec2& l, const vec2& r)
+        {
+                return l.x != r.x || l.y != r.y;
+        }
+
         friend vec2 operator*(vec2 a, Float b) {
                 return vec2(a.x*b, a.y*b);
         }
