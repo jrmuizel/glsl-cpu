@@ -1019,7 +1019,7 @@ uint32_t fetchPixel(sampler2D sampler, int x, int y) {
 }
 
 float to_float(uint32_t x) {
-        return x * 1./255.;
+        return x * (1.f/255.f);
 }
 
 Float extract_component(uint32_t a, uint32_t b, uint32_t c, uint32_t d, int shift) {
@@ -1032,12 +1032,14 @@ Float extract_component(uint32_t a, uint32_t b, uint32_t c, uint32_t d, int shif
         return ret;
 }
 
+// This needs to be faster
 vec4 pixel_to_vec4(uint32_t a, uint32_t b, uint32_t c, uint32_t d) {
       return vec4(extract_component(a, b, c, d, 16),
            extract_component(a, b, c, d, 8),
            extract_component(a, b, c, d, 0),
            extract_component(a, b, c, d, 24));
 }
+
 vec4 texelFetch(sampler2D sampler, ivec2 P, int lod) {
         return pixel_to_vec4(
                       fetchPixel(sampler, P.x.x, P.y.x),
