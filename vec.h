@@ -28,6 +28,17 @@ SI Float if_then_else(I32 c, float t, float e) {
     return _mm_or_ps(_mm_and_ps(c, Float(t)), _mm_andnot_ps(c, Float(e)));
 }
 
+SI Float if_then_else(I32 c, double t, double e) {
+    return _mm_or_ps(_mm_and_ps(c, Float(t)), _mm_andnot_ps(c, Float(e)));
+}
+
+
+SI I32 if_then_else(I32 c, int t, int e) {
+    return _mm_or_ps(_mm_and_ps(c, I32(t)), _mm_andnot_ps(c, I32(e)));
+}
+
+
+
 SI Float if_then_else(I32 c, Float t, Float e) {
     return _mm_or_ps(_mm_and_ps(c, t), _mm_andnot_ps(c, e));
 }
@@ -261,6 +272,16 @@ I32   cast  (Float v) { return      __builtin_convertvector(v,   I32); }
         return roundtrip - if_then_else(roundtrip > v, Float(1), Float(0));
     #endif
     }
+
+Float ceil(Float v) {
+    #if defined(JUMPER_IS_SSE41)
+        return _mm_ceil_ps(v);
+    #else
+        Float roundtrip = _mm_cvtepi32_ps(_mm_cvttps_epi32(v));
+        return roundtrip + if_then_else(roundtrip < v, Float(1), Float(0));
+    #endif
+    }
+
 
     U32 round(Float v, Float scale) { return _mm_cvtps_epi32(v*scale); }
 
@@ -1039,6 +1060,14 @@ vec4 texture(sampler2D sampler, vec3 P) {
         ivec2 coord(round(P.x, sampler->width), round(P.y, sampler->height));
         return texelFetch(sampler, coord, 0);
 }
+
+vec4 textureLod(sampler2DArray sampler, vec3 P, Float lod) {
+        assert(0);
+        // just do nearest for now
+        return vec4();
+}
+
+
 
 vec4 texture(sampler2DArray sampler, vec3 P, Float layer) {
         assert(0);
