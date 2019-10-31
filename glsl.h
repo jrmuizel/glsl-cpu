@@ -2,6 +2,8 @@
 #include <stdint.h>
 #include <xmmintrin.h>
 #include <assert.h>
+#include <math.h>
+#include <array>
 
 // Every function in this file should be marked static and inline using SI.
 #if defined(__clang__)
@@ -326,6 +328,13 @@ Float pow(Float x, Float y) {
                                          , approx_pow2(approx_log2(x) * y));
 }
 
+Float exp(Float y) {
+    float x = 2.718281828459045235360287471352;
+    return approx_pow2(log2f(x) * y);
+}
+
+
+
 struct ivec4;
 
 struct ivec2 {
@@ -507,6 +516,17 @@ struct vec2_ref {
         vec2_ref& operator/=(vec2 a) {
                 x /= a.x;
                 y /= a.y;
+                return *this;
+        }
+
+        vec2_ref& operator+=(vec2 a) {
+                x += a.x;
+                y += a.y;
+                return *this;
+        }
+        vec2_ref& operator*=(vec2 a) {
+                x *= a.x;
+                y *= a.y;
                 return *this;
         }
 
@@ -750,7 +770,13 @@ struct vec4 {
         friend vec4 operator+(vec4 a, vec4 b) {
                 return vec4(a.x+b.x, a.y+b.y, a.z+b.z, a.w+b.w);
         }
-
+        vec4& operator+=(vec4 a) {
+                x += a.x;
+                y += a.y;
+                z += a.z;
+                w += a.w;
+                return *this;
+        }
         vec4& operator/=(vec4 a) {
                 x /= a.x;
                 y /= a.y;
