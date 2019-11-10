@@ -5,6 +5,8 @@
 #include <math.h>
 #include <array>
 
+
+// Some of this is copied from Skia and is governed by a BSD-style license
 // Every function in this file should be marked static and inline using SI.
 #if defined(__clang__)
     #define SI __attribute__((always_inline)) static inline
@@ -535,9 +537,9 @@ struct vec2_ref {
 
 
 struct vec3 {
-        vec3() { vec3(0); }
-        vec3(Float a): x(a), y(a), z(a) {}
-        vec3(Float x, Float y, Float z): x(x), y(y), z(z)  {}
+        constexpr vec3() : vec3(0) {  }
+        constexpr vec3(Float a): x(a), y(a), z(a) {}
+        constexpr vec3(Float x, Float y, Float z): x(x), y(y), z(z)  {}
         vec3(vec2 a, Float z): x(a.x), y(a.y), z(z)  {}
         Float x;
         Float y;
@@ -978,7 +980,7 @@ struct mat3 {
                 data[2] = c;
         }
 
-        mat3(Float d1, Float d2, Float d3, Float d4, Float d5, Float d6, Float d7, Float d8, Float d9) {
+        constexpr mat3(Float d1, Float d2, Float d3, Float d4, Float d5, Float d6, Float d7, Float d8, Float d9) {
                 data[0] = vec3(d1, d2, d3);
                 data[1] = vec3(d4, d5, d6);
                 data[2] = vec3(d7, d8, d9);
