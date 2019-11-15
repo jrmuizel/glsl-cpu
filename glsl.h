@@ -1065,6 +1065,14 @@ struct mat3 {
 };
 
 struct mat4 {
+        static mat4 load_from_ptr(const float *f) {
+                mat4 m;
+                // XXX: hopefully this is in the right order
+                m.data[0] = vec4(f[0], f[1], f[2], f[3]);
+                m.data[1] = vec4(f[4], f[5], f[6], f[7]);
+                m.data[2] = vec4(f[8], f[9], f[10], f[11]);
+                m.data[3] = vec4(f[12], f[13], f[14], f[15]);
+        }
         vec4 data[4];
         vec4& operator[](int index) {
                 return data[index];
