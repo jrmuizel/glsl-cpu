@@ -4,5 +4,5 @@ COUNT=0
 for i in *.pp; do
 cargo run --manifest-path=../../glsl-to-cxx/Cargo.toml --release $i > $i.h
 COUNT=$((COUNT+1))
-echo "namespace k$COUNT {\n#include \"$i.h\"\n}" >> all.h
+echo -e "namespace k$COUNT {\r#include \"$i.h\"\n}" >> all.h
 done
