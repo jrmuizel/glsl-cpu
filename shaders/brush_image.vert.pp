@@ -1091,7 +1091,7 @@ void main(void){
 
 
 
-        init_transform_vs(vec4(vec2(- 1.0e16), vec2(1.0e16)));
+
 
     } else {
         bvec4 edge_mask = notEqual(edge_flags & ivec4(1, 2, 4, 8), ivec4(0));
@@ -1114,11 +1114,11 @@ void main(void){
 
 
 
-    write_clip(
-        vi . world_pos,
-        vi . snap_offset,
-        clip_area
-    );
+
+
+
+
+
 
 
 
@@ -1172,7 +1172,7 @@ void main(void){
 
 
 
-      out vec2 vLocalPos;
+
 
 
 
@@ -1186,9 +1186,9 @@ flat out vec4 vUvBounds;
 flat out vec4 vUvSampleBounds;
 
 
-flat out vec4 vColor;
-flat out vec2 vMaskSwizzle;
-flat out vec2 vTileRepeat;
+
+
+
 
 
 
@@ -1288,28 +1288,28 @@ void brush_vs(
     vec2 f =(vi . local_pos - local_rect . p0)/ local_rect . size;
 
 
-    int color_mode = prim_user_data . x & 0xffff;
-    int blend_mode = prim_user_data . x >> 16;
-    int raster_space = prim_user_data . y;
-
-    if(color_mode == 0){
-        color_mode = uMode;
-    }
 
 
 
 
-    switch(raster_space){
-        case 1 : {
 
 
 
-            f = get_image_quad_uv(segment_user_data, f);
-            break;
-        }
-        default :
-            break;
-    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1328,47 +1328,47 @@ void brush_vs(
 
 
 
-    vTileRepeat = repeat . xy;
 
-    float opacity = float(prim_user_data . z)/ 65535.0;
-    switch(blend_mode){
-        case 0 :
-            image_data . color . a *= opacity;
-            break;
-        case 1 :
-        default :
-            image_data . color *= opacity;
-            break;
-    }
 
-    switch(color_mode){
-        case 1 :
-        case 7 :
-            vMaskSwizzle = vec2(0.0, 1.0);
-            vColor = image_data . color;
-            break;
-        case 5 :
-        case 6 :
-        case 9 :
-            vMaskSwizzle = vec2(1.0, 0.0);
-            vColor = image_data . color;
-            break;
-        case 2 :
-        case 3 :
-        case 8 :
-            vMaskSwizzle = vec2(1.0, 0.0);
-            vColor = vec4(image_data . color . a);
-            break;
-        case 4 :
-            vMaskSwizzle = vec2(- 1.0, 1.0);
-            vColor = vec4(image_data . color . a)* image_data . background_color;
-            break;
-        default :
-            vMaskSwizzle = vec2(0.0);
-            vColor = vec4(1.0);
-    }
 
-    vLocalPos = vi . local_pos;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 }
 

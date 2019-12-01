@@ -1157,9 +1157,9 @@ void main(void){
 
 
 
-    float clip_alpha = do_clip();
 
-    frag . color *= clip_alpha;
+
+
 
 
 
@@ -1174,7 +1174,7 @@ void main(void){
 flat in vec4 vColor;
 
 
-      in vec2 vLocalPos;
+
 
 
 
@@ -1215,7 +1215,7 @@ flat in vec4 vColor;
 Fragment brush_fs(){
     vec4 color = vColor;
 
-    color *= init_transform_fs(vLocalPos);
+
 
     return Fragment(color);
 }

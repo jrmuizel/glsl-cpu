@@ -905,14 +905,14 @@ float rounded_rect(vec2 pos,
 
 
 
-      in vec2 vLocalPos;
-flat in vec3 vClipParams;
 
 
 
-
-
-
+      in vec4 vLocalPos;
+flat in vec4 vClipCenter_Radius_TL;
+flat in vec4 vClipCenter_Radius_TR;
+flat in vec4 vClipCenter_Radius_BL;
+flat in vec4 vClipCenter_Radius_BR;
 
 
 flat in float vClipMode;
@@ -1021,41 +1021,41 @@ flat in float vClipMode;
 
 
 
-float sdf_rounded_rect(vec2 pos, vec3 clip_params){
-    return length(max(abs(pos)- clip_params . xy, 0.0))- clip_params . z;
-}
+
+
+
 
 
 void main(void){
 
-    vec2 local_pos = vLocalPos . xy;
 
 
+    vec2 local_pos = vLocalPos . xy / vLocalPos . w;
 
     float aa_range = compute_aa_range(local_pos);
 
 
-    float d = sdf_rounded_rect(local_pos, vClipParams);
-    float f = distance_aa(aa_range, d);
-    float r = mix(f, 1.0 - f, vClipMode);
-    oFragColor = vec4(r);
 
 
 
 
 
+    float alpha = init_transform_fs(local_pos . xy);
+
+    float clip_alpha = rounded_rect(local_pos . xy,
+                                    vClipCenter_Radius_TL,
+                                    vClipCenter_Radius_TR,
+                                    vClipCenter_Radius_BR,
+                                    vClipCenter_Radius_BL,
+                                    aa_range);
+
+    float combined_alpha = alpha * clip_alpha;
 
 
+    float final_alpha = mix(combined_alpha, 1.0 - combined_alpha, vClipMode);
+    float final_final_alpha = vLocalPos . w > 0.0 ? final_alpha : 0.0;
 
-
-
-
-
-
-
-
-
-
+    oFragColor = vec4(final_final_alpha, 0.0, 0.0, 1.0);
 
 }
 

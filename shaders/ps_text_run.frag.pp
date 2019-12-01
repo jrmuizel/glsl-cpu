@@ -1014,7 +1014,7 @@ flat in vec4 vUvBorder;
 flat in vec2 vMaskSwizzle;
 
 
-      in vec4 vUvClip;
+
 
 
 
@@ -1309,7 +1309,7 @@ void main(void){
 
     float alpha = do_clip();
 
-    alpha *= float(all(greaterThanEqual(vUvClip, vec4(0.0))));
+
 
 
 

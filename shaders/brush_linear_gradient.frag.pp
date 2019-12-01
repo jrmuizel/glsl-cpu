@@ -48,7 +48,6 @@
 
 
 
-
         precision highp sampler2DArray;
 
 
@@ -281,7 +280,7 @@ uniform sampler2DArray sColor2;
 
 
 
-uniform sampler2D sDither;
+
 
 
 
@@ -964,19 +963,19 @@ float do_clip(){
 }
 
 
+
+
+
+
+
+
+
+
+
+
 vec4 dither(vec4 color){
-    const int matrix_mask = 7;
-
-    ivec2 pos = ivec2(gl_FragCoord . xy)& ivec2(matrix_mask);
-    float noise_normalized =(texelFetch(sDither, pos, 0). r * 255.0 + 0.5)/ 64.0;
-    float noise =(noise_normalized - 0.5)/ 256.0;
-
-    return color + vec4(noise, noise, noise, 0);
+    return color;
 }
-
-
-
-
 
 
 vec4 sample_gradient(highp int address, float offset, float gradient_repeat){
@@ -1158,9 +1157,9 @@ void main(void){
 
 
 
-    float clip_alpha = do_clip();
 
-    frag . color *= clip_alpha;
+
+
 
 
 
@@ -1185,8 +1184,8 @@ flat in vec2 vRepeatedSize;
       in vec2 vPos;
 
 
-      in vec2 vLocalPos;
-flat in vec2 vTileRepeat;
+
+
 
 
 
@@ -1255,22 +1254,22 @@ Fragment brush_fs(){
 
 
 
-    vec2 local_pos = max(vPos, vec2(0.0));
-
-
-    vec2 pos = mod(local_pos, vRepeatedSize);
-
-    vec2 prim_size = vRepeatedSize * vTileRepeat;
-
-    if(local_pos . x >= prim_size . x){
-        pos . x = vRepeatedSize . x;
-    }
-    if(local_pos . y >= prim_size . y){
-        pos . y = vRepeatedSize . y;
-    }
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+    vec2 pos = mod(vPos, vRepeatedSize);
 
 
     float offset = dot(pos - vStartPoint, vScaledDir);
@@ -1280,7 +1279,7 @@ Fragment brush_fs(){
                                  vGradientRepeat);
 
 
-    color *= init_transform_fs(vLocalPos);
+
 
 
     return Fragment(color);

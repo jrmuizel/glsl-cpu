@@ -1157,9 +1157,9 @@ void main(void){
 
 
 
-    float clip_alpha = do_clip();
 
-    frag . color *= clip_alpha;
+
+
 
 
 
@@ -1172,7 +1172,7 @@ void main(void){
 
 
 
-      in vec2 vLocalPos;
+
 
 
 
@@ -1186,9 +1186,9 @@ flat in vec4 vUvBounds;
 flat in vec4 vUvSampleBounds;
 
 
-flat in vec4 vColor;
-flat in vec2 vMaskSwizzle;
-flat in vec2 vTileRepeat;
+
+
+
 
 
 
@@ -1382,22 +1382,22 @@ vec2 compute_repeated_uvs(float perspective_divisor){
 
 
 
-    vec2 local_uv = max(vUv * perspective_divisor, vec2(0.0));
-
-
-    vec2 repeated_uv = mod(local_uv, uv_size)+ vUvBounds . xy;
 
 
 
 
-    if(local_uv . x >= vTileRepeat . x * uv_size . x){
-        repeated_uv . x = vUvBounds . z;
-    }
-    if(local_uv . y >= vTileRepeat . y * uv_size . y){
-        repeated_uv . y = vUvBounds . w;
-    }
 
 
+
+
+
+
+
+
+
+
+
+    vec2 repeated_uv = mod(vUv * perspective_divisor, uv_size)+ vUvBounds . xy;
 
 
     return repeated_uv;
@@ -1423,18 +1423,18 @@ Fragment brush_fs(){
 
 
 
-        float alpha = 1.0;
-
-    texel . rgb = texel . rgb * vMaskSwizzle . x + texel . aaa * vMaskSwizzle . y;
-
-    vec4 alpha_mask = texel * alpha;
-    frag . color = vColor * alpha_mask;
 
 
 
 
 
 
+
+
+
+
+
+    frag . color = texel;
 
 
     return frag;

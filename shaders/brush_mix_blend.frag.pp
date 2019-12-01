@@ -1157,9 +1157,9 @@ void main(void){
 
 
 
-    float clip_alpha = do_clip();
 
-    frag . color *= clip_alpha;
+
+
 
 
 

@@ -1091,7 +1091,7 @@ void main(void){
 
 
 
-        init_transform_vs(vec4(vec2(- 1.0e16), vec2(1.0e16)));
+
 
     } else {
         bvec4 edge_mask = notEqual(edge_flags & ivec4(1, 2, 4, 8), ivec4(0));
@@ -1114,11 +1114,11 @@ void main(void){
 
 
 
-    write_clip(
-        vi . world_pos,
-        vi . snap_offset,
-        clip_area
-    );
+
+
+
+
+
 
 
 
@@ -1174,7 +1174,7 @@ void main(void){
 flat out vec4 vColor;
 
 
-      out vec2 vLocalPos;
+
 
 
 
@@ -1206,7 +1206,7 @@ void brush_vs(
     vColor = prim . color * opacity;
 
 
-    vLocalPos = vi . local_pos;
+
 
 }
 

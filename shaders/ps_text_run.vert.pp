@@ -1014,7 +1014,6 @@ flat out vec4 vUvBorder;
 flat out vec2 vMaskSwizzle;
 
 
-      out vec4 vUvClip;
 
 
 
@@ -1023,16 +1022,17 @@ flat out vec2 vMaskSwizzle;
 
 
 
-RectWithSize transform_rect(RectWithSize rect, mat2 transform){
-    vec2 center = transform *(rect . p0 + rect . size * 0.5);
-    vec2 radius = mat2(abs(transform[0]), abs(transform[1]))*(rect . size * 0.5);
-    return RectWithSize(center - radius, radius * 2.0);
-}
 
-bool rect_inside_rect(RectWithSize little, RectWithSize big){
-    return all(lessThanEqual(vec4(big . p0, little . p0 + little . size),
-                             vec4(little . p0, big . p0 + big . size)));
-}
+
+
+
+
+
+
+
+
+
+
 
 
 struct Glyph {
@@ -1092,9 +1092,9 @@ VertexInfo write_text_vertex(RectWithSize local_clip_rect,
     mat2 glyph_transform_inv = mat2(1.0);
 
 
-    bool remove_subpx_offset = true;
 
 
+    bool remove_subpx_offset = transform . is_axis_aligned;
 
 
     if(remove_subpx_offset){
@@ -1121,7 +1121,7 @@ VertexInfo write_text_vertex(RectWithSize local_clip_rect,
 
 
 
-
+                snap_offset = glyph_transform_inv * snap_offset;
 
                 break;
             }
@@ -1140,20 +1140,20 @@ VertexInfo write_text_vertex(RectWithSize local_clip_rect,
 
 
 
-    RectWithSize local_rect = transform_rect(glyph_rect, glyph_transform_inv);
-
-
-    vec2 local_pos = local_rect . p0 + local_rect . size * aPosition . xy;
 
 
 
 
-    if(rect_inside_rect(local_rect, local_clip_rect)){
-        local_pos = glyph_transform_inv *(glyph_rect . p0 + glyph_rect . size * aPosition . xy);
-    }
 
 
 
+
+
+
+
+
+
+    vec2 local_pos = glyph_rect . p0 + glyph_rect . size * aPosition . xy;
 
 
 
@@ -1205,20 +1205,20 @@ void main(void){
 
 
 
-    mat2 glyph_transform = mat2(transform . m)* task . device_pixel_scale;
-
-
-    RectWithSize glyph_rect = RectWithSize(res . offset + glyph_transform *(text_offset + glyph . offset),
-                                           res . uv_rect . zw - res . uv_rect . xy);
 
 
 
 
 
 
+    float raster_scale = float(ph . user_data . z)/ 65535.0;
 
 
+    float scale = res . scale /(raster_scale * task . device_pixel_scale);
 
+
+    RectWithSize glyph_rect = RectWithSize(scale * res . offset + text_offset + glyph . offset,
+                                           scale *(res . uv_rect . zw - res . uv_rect . xy));
 
 
     vec2 snap_bias;
@@ -1258,10 +1258,10 @@ void main(void){
     glyph_rect . p0 += vi . snap_offset;
 
 
-    vec2 f =(glyph_transform * vi . local_pos - glyph_rect . p0)/ glyph_rect . size;
-    vUvClip = vec4(f, 1.0 - f);
 
 
+
+    vec2 f =(vi . local_pos - glyph_rect . p0)/ glyph_rect . size;
 
 
     write_clip(vi . world_pos, vi . snap_offset, clip_area);

@@ -48,7 +48,6 @@
 
 
 
-
         precision highp sampler2DArray;
 
 
@@ -281,7 +280,7 @@ uniform sampler2DArray sColor2;
 
 
 
-uniform sampler2D sDither;
+
 
 
 
@@ -1092,7 +1091,7 @@ void main(void){
 
 
 
-        init_transform_vs(vec4(vec2(- 1.0e16), vec2(1.0e16)));
+
 
     } else {
         bvec4 edge_mask = notEqual(edge_flags & ivec4(1, 2, 4, 8), ivec4(0));
@@ -1115,11 +1114,11 @@ void main(void){
 
 
 
-    write_clip(
-        vi . world_pos,
-        vi . snap_offset,
-        clip_area
-    );
+
+
+
+
+
 
 
 
@@ -1183,8 +1182,8 @@ flat out float vEndRadius;
 flat out vec2 vRepeatedSize;
 
 
-      out vec2 vLocalPos;
-flat out vec2 vTileRepeat;
+
+
 
 
 
@@ -1246,8 +1245,8 @@ void brush_vs(
     vGradientRepeat = float(gradient . extend_mode != 0);
 
 
-    vTileRepeat = tile_repeat . xy;
-    vLocalPos = vi . local_pos;
+
+
 
 }
 

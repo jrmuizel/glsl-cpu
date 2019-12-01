@@ -905,14 +905,14 @@ ClipVertexInfo write_clip_tile_vertex(RectWithSize local_clip_rect,
 
 
 
-      out vec2 vLocalPos;
-flat out vec3 vClipParams;
 
 
 
-
-
-
+      out vec4 vLocalPos;
+flat out vec4 vClipCenter_Radius_TL;
+flat out vec4 vClipCenter_Radius_TR;
+flat out vec4 vClipCenter_Radius_BL;
+flat out vec4 vClipCenter_Radius_BR;
 
 
 flat out float vClipMode;
@@ -987,32 +987,32 @@ void main(void){
 
 
 
-    vec2 half_size = 0.5 * local_rect . size;
-    float radius = clip . top_left . outer_inner_radius . x;
-    vLocalPos = vi . local_pos . xy - half_size - cmi . local_pos;
-    vClipParams . xy = half_size - vec2(radius);
-    vClipParams . z = radius;
 
 
 
 
 
 
+    vLocalPos = vi . local_pos;
 
+    RectWithEndpoint clip_rect = to_rect_with_endpoint(local_rect);
 
+    vec2 r_tl = clip . top_left . outer_inner_radius . xy;
+    vec2 r_tr = clip . top_right . outer_inner_radius . xy;
+    vec2 r_br = clip . bottom_right . outer_inner_radius . xy;
+    vec2 r_bl = clip . bottom_left . outer_inner_radius . xy;
 
+    vClipCenter_Radius_TL = vec4(clip_rect . p0 + r_tl, r_tl);
 
+    vClipCenter_Radius_TR = vec4(clip_rect . p1 . x - r_tr . x,
+                                 clip_rect . p0 . y + r_tr . y,
+                                 r_tr);
 
+    vClipCenter_Radius_BR = vec4(clip_rect . p1 - r_br, r_br);
 
-
-
-
-
-
-
-
-
-
+    vClipCenter_Radius_BL = vec4(clip_rect . p0 . x + r_bl . x,
+                                 clip_rect . p1 . y - r_bl . y,
+                                 r_bl);
 
 }
 
