@@ -670,6 +670,7 @@ vec2_scalar make_vec2(const ivec2_scalar& v) {
     return vec2_scalar{ float(v.x), float(v.y) };
 }
 
+
 template<typename N> ivec2 make_ivec2(const N& n) {
     return ivec2(n);
 }
@@ -682,6 +683,22 @@ struct ivec3_scalar {
         int32_t x;
         int32_t y;
         int32_t z;
+
+        int32_t& select(XYZW c) {
+                switch (c) {
+                    case X: return x;
+                    case Y: return y;
+                    case Z: return z;
+                    default: UNREACHABLE;
+                }
+        }
+        int32_t& sel(XYZW c1) {
+                return select(c1);
+        }
+        ivec2_scalar sel(XYZW c1, XYZW c2) {
+                return ivec2_scalar{select(c1), select(c2)};
+        }
+
 };
 
 struct ivec3 {
@@ -695,6 +712,10 @@ struct ivec3 {
         I32 z;
 
 };
+
+vec2_scalar make_vec2(ivec3_scalar s) {
+    return vec2_scalar{ float(s.x), float(s.y) };
+}
 
 ivec3_scalar make_ivec3(int32_t n) {
     return ivec3_scalar{ n, n, n };
@@ -1204,6 +1225,7 @@ struct vec4 {
         vec4(vec3 xyz, Float w): x(xyz.x), y(xyz.y), z(xyz.z), w(w) {}
         vec4(vec2 xy, vec2 zw): x(xy.x), y(xy.y), z(zw.x), w(zw.y) {}
         vec4(vec2 xy, Float z, Float w): x(xy.x), y(xy.y), z(z), w(w) {}
+        vec4(Float x, Float y, vec2 zw): x(x), y(y), z(zw.x), w(zw.y) {}
         constexpr vec4(vec4_scalar s) : x(s.x), y(s.y), z(s.z), w(s.w) {}
         constexpr vec4(vec4_scalar s0, vec4_scalar s1, vec4_scalar s2, vec4_scalar s3)
                 : x(Float{s0.x, s1.x, s2.x, s3.x}),
@@ -1957,7 +1979,7 @@ ivec4 texelFetch(isampler2D sampler, ivec2 P, int lod) {
                       );
 }
 
-vec4 texture(sampler2D sampler, vec3 P) {
+vec4 texture(sampler2D sampler, vec2 P) {
         // just do nearest for now
         ivec2 coord(round(P.x, sampler->width), round(P.y, sampler->height));
         return texelFetch(sampler, coord, 0);
@@ -1983,7 +2005,11 @@ vec4 texture(sampler2DArray sampler, vec3 P) {
 
 
 
-ivec2_scalar textureSize(sampler2DArray sampler, int) {
+ivec3_scalar textureSize(sampler2DArray sampler, int) {
+        return ivec3_scalar{int32_t(sampler->width), int32_t(sampler->height), int32_t(sampler->depth)};
+}
+
+ivec2_scalar textureSize(sampler2D sampler, int) {
         return ivec2_scalar{int32_t(sampler->width), int32_t(sampler->height)};
 }
 
