@@ -989,6 +989,17 @@ struct vec3_scalar {
         vec2_scalar_ref lsel(XYZW c1, XYZW c2) {
                 return vec2_scalar_ref(select(c1), select(c2));
         }
+
+        friend vec3_scalar operator*(vec3_scalar a, float b) {
+                return vec3_scalar{a.x*b, a.y*b, a.z*b};
+        }
+
+        friend vec3_scalar operator-(vec3_scalar a, vec3_scalar b) {
+                return vec3_scalar{a.x-b.x, a.y-b.y, a.z-b.z};
+        }
+        friend vec3_scalar operator+(vec3_scalar a, vec3_scalar b) {
+                return vec3_scalar{a.x+b.x, a.y+b.y, a.z+b.z};
+        }
 };
 
 struct vec3 {
@@ -1194,6 +1205,10 @@ struct vec4_scalar {
         }
         vec2_scalar_ref lsel(XYZW c1, XYZW c2) {
                 return vec2_scalar_ref(select(c1), select(c2));
+        }
+
+        friend vec4_scalar operator*(vec4_scalar a, float b) {
+                return vec4_scalar{a.x*b, a.y*b, a.z*b, a.w*b};
         }
 
         friend vec4_scalar operator-(vec4_scalar a, vec4_scalar b) {
@@ -2226,6 +2241,23 @@ void put_nth(vec4 &dst, int n, vec4_scalar src) {
         dst.w[n] = src.w;
 }
 
+Float assemble(float a, float b, float c, float d) {
+    return (Float){a, b, c, d};
+}
+
+vec2 assemble(vec2_scalar a, vec2_scalar b, vec2_scalar c, vec2_scalar d) {
+    return vec2(assemble(a.x, b.x, c.x, d.x), assemble(a.y, b.y, c.y, d.y));
+}
+
+vec3 assemble(vec3_scalar a, vec3_scalar b, vec3_scalar c, vec3_scalar d) {
+    return vec3(assemble(a.x, b.x, c.x, d.x), assemble(a.y, b.y, c.y, d.y),
+                assemble(a.z, b.z, c.z, d.z));
+}
+
+vec4 assemble(vec4_scalar a, vec4_scalar b, vec4_scalar c, vec4_scalar d) {
+    return vec4(assemble(a.x, b.x, c.x, d.x), assemble(a.y, b.y, c.y, d.y),
+                assemble(a.z, b.z, c.z, d.z), assemble(a.w, b.w, c.w, d.w));
+}
 
 template <size_t SIZE>
 std::array<int32_t, SIZE> get_nth(std::array<int32_t, SIZE> a, int n) {
