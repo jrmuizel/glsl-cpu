@@ -522,7 +522,7 @@ Float ceil(Float v) {
     }
 
 
-    U32 round(Float v, Float scale) { return _mm_cvtps_epi32(v*scale); }
+    I32 round(Float v, Float scale) { return _mm_cvtps_epi32(v*scale); }
 
 Float fract(Float v) { return v - floor(v); }
 
