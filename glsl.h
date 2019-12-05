@@ -2178,8 +2178,8 @@ vec3 abs(vec3 v) {
 }
 
 mat2 inverse(mat2 v) {
-        assert(0);
-        return mat2();
+        Float det = v[0].x*v[1].y - v[0].y * v[1].x;
+        return mat2(vec2(v[1].y, -v[0].y), vec2(-v[1].x, v[0].x))* (1./det);
 }
 
 int32_t get_nth(I32 a, int n) {
