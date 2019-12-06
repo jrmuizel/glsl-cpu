@@ -37,6 +37,10 @@ struct VertexAttrib {
         char *buf; // XXX: this can easily dangle
 };
 
+template<typename T>
+void load_attrib(T& attrib, VertexAttrib &va, unsigned short *indices, int start, int instance, int count, int dest) {
+}
+
 #include "all.h"
 
 
