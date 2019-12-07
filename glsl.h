@@ -2118,7 +2118,7 @@ SI R mix(T x, T y, bvec2 a) {
 
 template <typename T, typename U, typename R = typename T::vector_type>
 SI R mix(T x, T y, U a) {
-        return (x - y) * a + x;
+        return (y - x) * a + x;
 }
 
 float dot(vec3_scalar a, vec3_scalar b) {
