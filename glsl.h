@@ -2048,11 +2048,11 @@ vec4 vec2::sel(XYZW c1, XYZW c2, XYZW c3, XYZW c4)
 
 template <typename T, typename U, typename A, typename R = typename T::vector_type>
 SI R mix(T x, U y, A a) {
-        return (x - y) * a + x;
+        return (y - x) * a + x;
 }
 
 SI Float mix(Float x, Float y, Float a) {
-        return (x - y) * a + x;
+        return (y - x) * a + x;
 }
 
 bool any(bool x) {
