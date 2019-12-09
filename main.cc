@@ -44,9 +44,9 @@ struct ProgramImpl {
 };
 
 struct ShaderImpl {
-    typedef void (ShaderImpl::*SetUniform1iFunc)(int index, int value);
-    typedef void (ShaderImpl::*SetUniform4fvFunc)(int index, const float *value);
-    typedef void (ShaderImpl::*SetUniformMatrix4fvFunc)(int index, const float *value);
+    typedef void (*SetUniform1iFunc)(ShaderImpl*, int index, int value);
+    typedef void (*SetUniform4fvFunc)(ShaderImpl*, int index, const float *value);
+    typedef void (*SetUniformMatrix4fvFunc)(ShaderImpl*, int index, const float *value);
 
     SetUniform1iFunc set_uniform_1i_func = nullptr;
     SetUniform4fvFunc set_uniform_4fv_func = nullptr;
@@ -54,9 +54,9 @@ struct ShaderImpl {
 };
 
 struct VertexShaderImpl : ShaderImpl {
-    typedef void (VertexShaderImpl::*InitBatchFunc)();
-    typedef void (VertexShaderImpl::*LoadAttribsFunc)(const void *locs, VertexAttrib *attribs, unsigned short *indices, int start, int instance, int count);
-    typedef void (VertexShaderImpl::*RunFunc)(char* flats, char* interps, size_t interp_stride);
+    typedef void (*InitBatchFunc)(VertexShaderImpl*);
+    typedef void (*LoadAttribsFunc)(VertexShaderImpl*, const void *locs, VertexAttrib *attribs, unsigned short *indices, int start, int instance, int count);
+    typedef void (*RunFunc)(VertexShaderImpl*, char* flats, char* interps, size_t interp_stride);
 
     InitBatchFunc init_batch_func = nullptr;
     LoadAttribsFunc load_attribs_func = nullptr;
@@ -66,12 +66,12 @@ struct VertexShaderImpl : ShaderImpl {
 };
 
 struct FragmentShaderImpl : ShaderImpl {
-    typedef void (FragmentShaderImpl::*InitBatchFunc)();
-    typedef void (FragmentShaderImpl::*InitPrimitiveFunc)(const void* flats);
-    typedef void (FragmentShaderImpl::*InitSpanFunc)(const void* interps, const void* step);
-    typedef void (FragmentShaderImpl::*RunFunc)(const void* step);
-    typedef void (FragmentShaderImpl::*SkipFunc)(const void* step);
-    typedef bool (FragmentShaderImpl::*UseDiscardFunc)();
+    typedef void (*InitBatchFunc)(FragmentShaderImpl*);
+    typedef void (*InitPrimitiveFunc)(FragmentShaderImpl*, const void* flats);
+    typedef void (*InitSpanFunc)(FragmentShaderImpl*, const void* interps, const void* step);
+    typedef void (*RunFunc)(FragmentShaderImpl*, const void* step);
+    typedef void (*SkipFunc)(FragmentShaderImpl*, const void* step);
+    typedef bool (*UseDiscardFunc)(FragmentShaderImpl*);
 
     InitBatchFunc init_batch_func = nullptr;
     InitPrimitiveFunc init_primitive_func = nullptr;
@@ -84,7 +84,7 @@ struct FragmentShaderImpl : ShaderImpl {
     Bool isPixelDiscarded;
     vec4 gl_FragColor;
 
-    void step_fragcoord() {}
+    void step_fragcoord();
 };
 
 template<typename T>
