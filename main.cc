@@ -78,6 +78,8 @@ struct FragmentShaderImpl : ShaderImpl {
     vec4 gl_FragCoord;
     Bool isPixelDiscarded;
     vec4 gl_FragColor;
+
+    void step_fragcoord() {}
 };
 
 template<typename T>
