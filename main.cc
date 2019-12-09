@@ -38,13 +38,14 @@ struct ProgramImpl {
     virtual ~ProgramImpl() {}
     virtual const char *get_name() const = 0;
     virtual int get_uniform(const char *name) const = 0;
+    virtual void *get_samplers() = 0;
     virtual void bind_attrib(const char *name, int index) = 0;
     virtual const void* get_attrib_locations() const = 0;
     virtual void init_shaders(void *vertex_shader, void *fragment_shader) = 0;
 };
 
 struct ShaderImpl {
-    typedef void (*SetUniform1iFunc)(ShaderImpl*, int index, int value);
+    typedef void (*SetUniform1iFunc)(ShaderImpl*, void *samplers, int index, int value);
     typedef void (*SetUniform4fvFunc)(ShaderImpl*, int index, const float *value);
     typedef void (*SetUniformMatrix4fvFunc)(ShaderImpl*, int index, const float *value);
 
@@ -54,7 +55,7 @@ struct ShaderImpl {
 };
 
 struct VertexShaderImpl : ShaderImpl {
-    typedef void (*InitBatchFunc)(VertexShaderImpl*);
+    typedef void (*InitBatchFunc)(VertexShaderImpl*, void *samplers);
     typedef void (*LoadAttribsFunc)(VertexShaderImpl*, const void *locs, VertexAttrib *attribs, unsigned short *indices, int start, int instance, int count);
     typedef void (*RunFunc)(VertexShaderImpl*, char* flats, char* interps, size_t interp_stride);
 
@@ -66,7 +67,7 @@ struct VertexShaderImpl : ShaderImpl {
 };
 
 struct FragmentShaderImpl : ShaderImpl {
-    typedef void (*InitBatchFunc)(FragmentShaderImpl*);
+    typedef void (*InitBatchFunc)(FragmentShaderImpl*, void *samplers);
     typedef void (*InitPrimitiveFunc)(FragmentShaderImpl*, const void* flats);
     typedef void (*InitSpanFunc)(FragmentShaderImpl*, const void* interps, const void* step);
     typedef void (*RunFunc)(FragmentShaderImpl*, const void* step);
