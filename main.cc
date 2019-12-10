@@ -83,6 +83,7 @@ struct FragmentShaderImpl : ShaderImpl {
     vec4 gl_FragCoord;
     Bool isPixelDiscarded;
     vec4 gl_FragColor;
+    vec4 gl_SecondaryFragColor;
 
     void step_fragcoord() {}
 };
