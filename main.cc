@@ -68,9 +68,9 @@ struct VertexShaderImpl : ShaderImpl {
 struct FragmentShaderImpl : ShaderImpl {
     typedef void (*InitBatchFunc)(FragmentShaderImpl*, ProgramImpl *prog);
     typedef void (*InitPrimitiveFunc)(FragmentShaderImpl*, const void* flats);
-    typedef void (*InitSpanFunc)(FragmentShaderImpl*, const void* interps, const void* step);
-    typedef void (*RunFunc)(FragmentShaderImpl*, const void* step);
-    typedef void (*SkipFunc)(FragmentShaderImpl*, const void* step);
+    typedef void (*InitSpanFunc)(FragmentShaderImpl*, const void* interps, const void* step, float step_width);
+    typedef void (*RunFunc)(FragmentShaderImpl*);
+    typedef void (*SkipFunc)(FragmentShaderImpl*);
     typedef bool (*UseDiscardFunc)(FragmentShaderImpl*);
 
     InitBatchFunc init_batch_func = nullptr;
