@@ -1845,7 +1845,7 @@ SI mat4 if_then_else(int32_t c, mat4 t, mat4 e) {
 }
 
 SI I32 clampCoord(I32 coord, int limit) {
-    return _mm_min_epi16(_mm_max_epi16(coord, _mm_setzero_si128()), _mm_set1_epi16(limit));
+    return _mm_min_epi16(_mm_max_epi16(coord, _mm_setzero_si128()), _mm_set1_epi16(limit-1));
 }
 SI int clampCoord(int coord, int limit) {
     return std::min(std::max(coord, 0), limit);
@@ -2025,7 +2025,8 @@ SI Float mix(Float x, Float y, Float a) {
         return (y - x) * a + x;
 }
 
-vec4 textureLinear(sampler2D sampler, vec2 P) {
+template<typename S>
+vec4 textureLinear(S sampler, vec2 P, I32 zoffset = 0) {
     P.x *= sampler->width;
     P.y *= sampler->height;
     P -= 0.5f;
@@ -2033,13 +2034,13 @@ vec4 textureLinear(sampler2D sampler, vec2 P) {
     vec2 r = P - f;
     ivec2 i((I32)_mm_cvtps_epi32(f.x), (I32)_mm_cvtps_epi32(f.y));
 
-#if 1
-    __m128i iny = _mm_andnot_si128(_mm_cmplt_epi32(i.y, _mm_setzero_si128()),
-                                   _mm_cmplt_epi32(i.y, _mm_set1_epi32(sampler->height - 1)));
+    __m128i yinside = _mm_andnot_si128(_mm_cmplt_epi32(i.y, _mm_setzero_si128()),
+                                       _mm_cmplt_epi32(i.y, _mm_set1_epi32(sampler->height - 1)));
     __m128i row0 = _mm_min_epi16(_mm_max_epi16(i.y, _mm_setzero_si128()),
                                  _mm_set1_epi32(sampler->height - 1));
-    row0 = _mm_mul_epu32(row0, _mm_set1_epi32(sampler->stride>>2));
-    __m128i row1 = _mm_add_epi32(row0, _mm_and_si128(iny, _mm_set1_epi32(sampler->stride>>2)));
+    row0 = _mm_madd_epi16(row0, _mm_set1_epi32(sampler->stride>>2));
+    row0 = _mm_add_epi32(row0, zoffset);
+    __m128i row1 = _mm_add_epi32(row0, _mm_and_si128(yinside, _mm_set1_epi32(sampler->stride>>2)));
 
     __m128i col = _mm_min_epi16(_mm_max_epi16(i.x, _mm_setzero_si128()), _mm_set1_epi32(sampler->width - 2));
     row0 = _mm_add_epi32(row0, col);
@@ -2047,123 +2048,49 @@ vec4 textureLinear(sampler2D sampler, vec2 P) {
 
     __m128i xlt = _mm_cmplt_epi32(i.x, _mm_setzero_si128());
     __m128i xgt = _mm_cmpgt_epi32(i.x, _mm_set1_epi32(sampler->width - 2));
-    __m128i fracx = _mm_cvtps_epi32(r.x * 256.0);
+
+    __m128i fracx = _mm_cvtps_epi32(r.x * 256.0f);
     fracx = _mm_shufflelo_epi16(fracx, _MM_SHUFFLE(2, 2, 0, 0));
     fracx = _mm_shufflehi_epi16(fracx, _MM_SHUFFLE(2, 2, 0, 0));
-    __m128i fracy = _mm_cvtps_epi32(r.y * 256.0);
-    fracy = _mm_or_si128(_mm_slli_epi16(fracy, 16), _mm_sub_epi32(_mm_set1_epi32(256), fracy));
+    fracx = _mm_slli_epi16(fracx, 4);
 
-    __m128i r0, r1, r2, r3;
-    {
-        __m128i cc = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)&sampler->buf[row0[0]]),
-                                       _mm_loadl_epi64((__m128i*)&sampler->buf[row1[0]]));
-        __m128 mask = _mm_shuffle_ps(xlt, xgt, _MM_SHUFFLE(0, 0, 0, 0));
-        cc = _mm_or_si128(_mm_andnot_si128(mask, cc),
-                          _mm_and_si128(mask, _mm_shuffle_epi32(cc, _MM_SHUFFLE(1, 0, 3, 2))));
+    __m128i fracy = _mm_cvtps_epi32(r.y * 256.0f);
+    fracy = _mm_or_si128(_mm_slli_epi32(fracy, 16), _mm_sub_epi32(_mm_set1_epi32(256), fracy));
 
-        __m128i cc0 = _mm_unpacklo_epi8(cc, _mm_setzero_si128());
-        __m128i cc1 = _mm_unpackhi_epi8(cc, _mm_setzero_si128());
-
-        __m128i frac0x = _mm_shuffle_epi32(fracx, _MM_SHUFFLE(0, 0, 0, 0));
-        cc = _mm_add_epi16(cc0, _mm_srli_epi16(_mm_mullo_epi16(_mm_sub_epi16(cc1, cc0), frac0x), 8));
-        __m128i frac0y = _mm_shuffle_epi32(fracy, _MM_SHUFFLE(0, 0, 0, 0));
-        r0 = _mm_madd_epi16(cc, frac0y);
+// r0,g0,b0,a0,r1,g1,b1,a1 \/ R0,G0,B0,A0,R1,G1,B1,A1
+// r0,R0,g0,G0,b0,B0,a0,A0,r1,R1,g1,G1,b1,B1,a1,A1
+// r0_,R0_,g0_,G0_,b0_,B0_,a0_,A0_ /\ r1_,R1_,g1_,G1_,b1_,B1_,a1_,A1_
+// (r0*(256-fracy) + R0*fracy), ...
+    __m128 r0, r1, r2, r3;
+    #define FILTER_LANE(out, idx) \
+    { \
+        __m128i cc = _mm_unpacklo_epi8( \
+            _mm_loadl_epi64((__m128i*)&sampler->buf[_mm_cvtsi128_si32(_mm_shuffle_epi32(row0, _MM_SHUFFLE(idx, idx, idx, idx)))]), \
+            _mm_loadl_epi64((__m128i*)&sampler->buf[_mm_cvtsi128_si32(_mm_shuffle_epi32(row1, _MM_SHUFFLE(idx, idx, idx, idx)))])); \
+        __m128i mask = _mm_shuffle_ps(xlt, xgt, _MM_SHUFFLE(idx, idx, idx, idx)); \
+        cc = _mm_or_si128(_mm_andnot_si128(mask, cc), \
+                          _mm_and_si128(mask, _mm_shuffle_epi32(cc, _MM_SHUFFLE(1, 0, 3, 2)))); \
+        __m128i cc0 = _mm_unpacklo_epi8(cc, _mm_setzero_si128()); \
+        __m128i cc1 = _mm_unpackhi_epi8(cc, _mm_setzero_si128()); \
+        cc = _mm_add_epi16(cc0, \
+                           _mm_mulhi_epi16(_mm_slli_epi16(_mm_sub_epi16(cc1, cc0), 4), \
+                                           _mm_shuffle_epi32(fracx, _MM_SHUFFLE(idx, idx, idx, idx)))); \
+        out = _mm_cvtepi32_ps(_mm_madd_epi16(cc, _mm_shuffle_epi32(fracy, _MM_SHUFFLE(idx, idx, idx, idx)))); \
     }
-    {
-        __m128i cc = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)&sampler->buf[row0[1]]),
-                                       _mm_loadl_epi64((__m128i*)&sampler->buf[row1[1]]));
-        __m128 mask = _mm_shuffle_ps(xlt, xgt, _MM_SHUFFLE(1, 1, 1, 1));
-        cc = _mm_or_si128(_mm_andnot_si128(mask, cc),
-                          _mm_and_si128(mask, _mm_shuffle_epi32(cc, _MM_SHUFFLE(1, 0, 3, 2))));
+    FILTER_LANE(r0, 0);
+    FILTER_LANE(r1, 1);
+    FILTER_LANE(r2, 2);
+    FILTER_LANE(r3, 3);
+    #undef FILTER_LANE
 
-        __m128i cc0 = _mm_unpacklo_epi8(cc, _mm_setzero_si128());
-        __m128i cc1 = _mm_unpackhi_epi8(cc, _mm_setzero_si128());
+    _MM_TRANSPOSE4_PS(r0, r1, r2, r3);
+    return vec4(r2, r1, r0, r3) * (1.0f / 0xFF00);
 
-        __m128i frac1x = _mm_shuffle_epi32(fracx, _MM_SHUFFLE(1, 1, 1, 1));
-        cc = _mm_add_epi16(cc0, _mm_srli_epi16(_mm_mullo_epi16(_mm_sub_epi16(cc1, cc0), frac1x), 8));
-        __m128i frac1y = _mm_shuffle_epi32(fracy, _MM_SHUFFLE(1, 1, 1, 1));
-        r1 = _mm_madd_epi16(cc, frac1y);
-    }
-    {
-        __m128i cc = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)&sampler->buf[row0[2]]),
-                                       _mm_loadl_epi64((__m128i*)&sampler->buf[row1[2]]));
-        __m128 mask = _mm_shuffle_ps(xlt, xgt, _MM_SHUFFLE(2, 2, 2, 2));
-        cc = _mm_or_si128(_mm_andnot_si128(mask, cc),
-                          _mm_and_si128(mask, _mm_shuffle_epi32(cc, _MM_SHUFFLE(1, 0, 3, 2))));
-
-        __m128i cc0 = _mm_unpacklo_epi8(cc, _mm_setzero_si128());
-        __m128i cc1 = _mm_unpackhi_epi8(cc, _mm_setzero_si128());
-
-        __m128i frac2x = _mm_shuffle_epi32(fracx, _MM_SHUFFLE(2, 2, 2, 2));
-        cc = _mm_add_epi16(cc0, _mm_srli_epi16(_mm_mullo_epi16(_mm_sub_epi16(cc1, cc0), frac2x), 8));
-        __m128i frac2y = _mm_shuffle_epi32(fracy, _MM_SHUFFLE(2, 2, 2, 2));
-        r2 = _mm_madd_epi16(cc, frac2y);
-    }
-    {
-        __m128i cc = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)&sampler->buf[row0[3]]),
-                                       _mm_loadl_epi64((__m128i*)&sampler->buf[row1[3]]));
-        __m128 mask = _mm_shuffle_ps(xlt, xgt, _MM_SHUFFLE(3, 3, 3, 3));
-        cc = _mm_or_si128(_mm_andnot_si128(mask, cc),
-                          _mm_and_si128(mask, _mm_shuffle_epi32(cc, _MM_SHUFFLE(1, 0, 3, 2))));
-        __m128i cc0 = _mm_unpacklo_epi8(cc, _mm_setzero_si128());
-        __m128i cc1 = _mm_unpackhi_epi8(cc, _mm_setzero_si128());
-
-        __m128i frac3x = _mm_shuffle_epi32(fracx, _MM_SHUFFLE(3, 3, 3, 3));
-        cc = _mm_add_epi16(cc0, _mm_srli_epi16(_mm_mullo_epi16(_mm_sub_epi16(cc1, cc0), frac3x), 8));
-        __m128i frac3y = _mm_shuffle_epi32(fracy, _MM_SHUFFLE(3, 3, 3, 3));
-        r3 = _mm_madd_epi16(cc, frac3y);
-    }
-
-    vec4 rf(_mm_cvtepi32_ps(r0), _mm_cvtepi32_ps(r1), _mm_cvtepi32_ps(r2), _mm_cvtepi32_ps(r3));
-    rf *= 1.0f / 0xFF00;
-    _MM_TRANSPOSE4_PS(rf.x, rf.y, rf.z, rf.w);
-    return rf;
-
-#if 0
-    //r0 = __mm_srli_epi32(r0, 8);
-    //r1 = __mm_srli_epi32(r1, 8);
-    //r2 = __mm_srli_epi32(r2, 8);
-    //r3 = __mm_srli_epi32(r3, 8);
-    //__m128i r02 = _mm_packs_epi32(r0, r2);
-    //__m128i r13 = _mm_packs_epi32(r1, r3);
-    __m128i r02 = _mm_or_si128(r0, _mm_slli_epi32(r2, 16));
-    __m128i r13 = _mm_or_si128(r1, _mm_slli_epi32(r1, 16));
-    __m128i r01 = _mm_unpacklo_epi16(r02, r13);
-    __m128i r23 = _mm_unpackhi_epi16(r02, r13);
-    __m128i rg = _mm_unpacklo_epi32(r01, r23);
-    __m128i ba = _mm_unpackhi_epi32(r01, r23);
-    __m128i ri = _mm_unpacklo_epi16(rg, _mm_setzero_si128());
-    __m128i gi = _mm_unpacklo_epi16(rg, _mm_setzero_si128());
-    __m128i bi = _mm_unpacklo_epi16(ba, _mm_setzero_si128());
-    __m128i ai = _mm_unpacklo_epi16(ba, _mm_setzero_si128());
-    vec4 rgba(_mm_cvtepi32_ps(ri), _mm_cvtepi32_ps(gi), _mm_cvtepi32_ps(bi), _mm_cvtepi32_ps(ai));
-    rgba *= 1.0f / 0xFF00;
-    return rgba;
-//r0, r1, g0, g1, b0, b1, a0, a1
-//r2, r3, g2, g3, b2, b3, a2, a3 
-#endif
-
-#else
-    vec4 c00 = texelFetch(sampler, i, 0);
-    vec4 c10 = texelFetch(sampler, i + ivec2(1, 0), 0);
-    vec4 c01 = texelFetch(sampler, i + ivec2(0, 1), 0);
-    vec4 c11 = texelFetch(sampler, i + ivec2(1, 1), 0);
-    return mix(mix(c00, c10, r.x), mix(c10, c11, r.x), r.y);
-#endif
-}
-
-vec4 textureLinear(sampler2DArray sampler, vec2 P, Float z) {
-    P.x *= sampler->width;
-    P.y *= sampler->height;
-    P -= 0.5f;
-    vec2 f = floor(P);
-    vec2 r = P - f;
-    ivec3 i((I32)_mm_cvtps_epi32(f.x), (I32)_mm_cvtps_epi32(f.y), (I32)_mm_cvtps_epi32(z));
-    vec4 c00 = texelFetch(sampler, i, 0);
-    vec4 c10 = texelFetch(sampler, i + ivec3(1, 0, 0), 0);
-    vec4 c01 = texelFetch(sampler, i + ivec3(0, 1, 0), 0);
-    vec4 c11 = texelFetch(sampler, i + ivec3(1, 1, 0), 0);
-    return mix(mix(c00, c10, r.x), mix(c01, c11, r.x), r.y);
+//    vec4 c00 = texelFetch(sampler, i, 0);
+//    vec4 c10 = texelFetch(sampler, i + ivec2(1, 0), 0);
+//    vec4 c01 = texelFetch(sampler, i + ivec2(0, 1), 0);
+//    vec4 c11 = texelFetch(sampler, i + ivec2(1, 1), 0);
+//    return mix(mix(c00, c10, r.x), mix(c10, c11, r.x), r.y);
 }
 
 vec4 texture(sampler2D sampler, vec2 P) {
@@ -2189,7 +2116,8 @@ vec4 texture(sampler2DArray sampler, vec3 P, Float layer) {
 }
 vec4 texture(sampler2DArray sampler, vec3 P) {
     if (sampler->filter == TextureFilter::LINEAR) {
-        return textureLinear(sampler, vec2(P.x, P.y), P.z);
+        I32 zoffset = clampCoord(_mm_cvtps_epi32(P.z), sampler->depth) * (sampler->height_stride/4);
+        return textureLinear(sampler, vec2(P.x, P.y), zoffset);
     } else {
         // just do nearest for now
         ivec3 coord(round(P.x, sampler->width), round(P.y, sampler->height), round(P.z, 1.));
