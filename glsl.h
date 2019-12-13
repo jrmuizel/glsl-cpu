@@ -2273,8 +2273,7 @@ vec2 abs(vec2 v) {
 }
 
 Float mod(Float a, Float b) {
-        assert(0);
-        return a;
+        return a - b * floor(a/b);
 }
 
 vec2 mod(vec2 a, vec2 b) {
