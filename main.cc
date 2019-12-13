@@ -95,8 +95,11 @@ template<typename T>
 void load_attrib(T& attrib, VertexAttrib &va, unsigned short *indices, int start, int instance, int count) {
 }
 
-#include "all.h"
+template<typename T>
+void load_flat_attrib(T& attrib, VertexAttrib &va, unsigned short *indices, int start, int instance, int count) {
+}
 
+#include "all.h"
 
 int main() {
 }
