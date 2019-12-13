@@ -1959,6 +1959,18 @@ vec4 texelFetch(sampler2D sampler, ivec2 P, int lod) {
         }
 }
 
+vec4 texelFetchRGBA32F(sampler2D sampler, ivec3 P, int lod) {
+        P = clamp2D(P, sampler);
+        assert(sampler->format == TextureFormat::RGBA32F);
+        return texelFetchFloat(sampler, P, lod);
+}
+
+vec4 texelFetchRGBA8(sampler2D sampler, ivec3 P, int lod) {
+        P = clamp2D(P, sampler);
+        assert(sampler->format == TextureFormat::RGBA8);
+        return texelFetchByte(sampler, P, lod);
+}
+
 vec4_scalar texelFetch(sampler2D sampler, ivec2_scalar P, int lod) {
         P = clamp2D(P, sampler);
         return pixel_to_vec4(sampler->buf[P.x + P.y * sampler->stride]);
@@ -1974,16 +1986,17 @@ vec4 texelFetch(sampler2DArray sampler, ivec3 P, int lod) {
         }
 }
 
-vec4 texelFetch(sampler2DArray sampler, ivec3 P, int lod) {
+vec4 texelFetchRGBA32F(sampler2DArray sampler, ivec3 P, int lod) {
         P = clamp2DArray(P, sampler);
-        if (sampler->format == TextureFormat::RGBA32F) {
-                return texelFetchFloat(sampler, P, lod);
-        } else {
-                assert(sampler->format == TextureFormat::RGBA8);
-                return texelFetchByte(sampler, P, lod);
-        }
+        assert(sampler->format == TextureFormat::RGBA32F);
+        return texelFetchFloat(sampler, P, lod);
 }
 
+vec4 texelFetchRGBA8(sampler2DArray sampler, ivec3 P, int lod) {
+        P = clamp2DArray(P, sampler);
+        assert(sampler->format == TextureFormat::RGBA8);
+        return texelFetchByte(sampler, P, lod);
+}
 
 ivec4 texelFetch(isampler2D sampler, ivec2 P, int lod) {
         P = clamp2D(P, sampler);
@@ -2134,9 +2147,6 @@ vec4 texture(sampler2DArray sampler, vec3 P) {
         return texelFetch(sampler, coord, 0);
     }
 }
-
-
-
 
 ivec3_scalar textureSize(sampler2DArray sampler, int) {
         return ivec3_scalar{int32_t(sampler->width), int32_t(sampler->height), int32_t(sampler->depth)};
