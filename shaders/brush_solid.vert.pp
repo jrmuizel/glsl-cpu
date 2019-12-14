@@ -762,7 +762,7 @@ uniform highp sampler2D sPrimitiveHeadersF;
 uniform highp isampler2D sPrimitiveHeadersI;
 
 
-in ivec4 aData;
+flat in ivec4 aData;
 
 
 
