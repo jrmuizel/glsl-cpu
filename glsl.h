@@ -1640,10 +1640,7 @@ struct mat2 {
         const vec2& operator[](int index) const {
                 return data[index];
         }
-        mat2() {
-                data[0] = vec2();
-                data[1] = vec2();
-        }
+        mat2() = default;
 
         mat2(float a) {
                 data[0] = vec2(a);
@@ -1734,11 +1731,7 @@ struct mat3 {
         const vec3& operator[](int index) const {
                 return data[index];
         }
-        mat3() {
-                data[0] = vec3();
-                data[1] = vec3();
-                data[2] = vec3();
-        }
+        mat3() = default;
         mat3(vec3 a, vec3 b, vec3 c) {
                 data[0] = a;
                 data[1] = b;
