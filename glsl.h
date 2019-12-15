@@ -1967,17 +1967,14 @@ vec4 texelFetchRGBA8(sampler2D sampler, ivec2 P, int lod) {
                       sampler->buf[offset.w]);
 }
 
-int expand_R8(int x) {
-        return (x << 24) | (x << 16) | (x << 8) | x;
-}
-
 vec4 texelFetchR8(sampler2D sampler, ivec2 P, int lod) {
-        I32 offset = P.x + P.y*sampler->stride;
-        return pixel_to_vec4(
-                      expand_R8(((char*)sampler->buf)[offset.x]),
-                      expand_R8(((char*)sampler->buf)[offset.y]),
-                      expand_R8(((char*)sampler->buf)[offset.z]),
-                      expand_R8(((char*)sampler->buf)[offset.w]));
+        I32 offset = P.x + P.y*sampler->stride*4;
+        return vec4((Float){
+                to_float(((char*)sampler->buf)[offset.x]),
+                to_float(((char*)sampler->buf)[offset.y]),
+                to_float(((char*)sampler->buf)[offset.z]),
+                to_float(((char*)sampler->buf)[offset.w])
+        });
 }
 
 vec4 texelFetchRGBA8(sampler2DArray sampler, ivec3 P, int lod) {
