@@ -224,6 +224,7 @@ struct vec4_scalar;
 
 struct vec2_scalar {
         typedef struct vec2 vector_type;
+        typedef float element_type;
 
         float x;
         float y;
@@ -318,6 +319,7 @@ struct vec2_scalar_ref {
 
 struct vec2 {
         typedef struct vec2 vector_type;
+        typedef float element_type;
 
         constexpr vec2() : vec2(0) {}
         constexpr vec2(Float a): x(a), y(a) {}
@@ -583,6 +585,8 @@ Float exp(Float y) {
 struct ivec4;
 
 struct ivec2_scalar {
+        typedef int32_t element_type;
+
         int32_t x;
         int32_t y;
 
@@ -606,6 +610,8 @@ struct ivec2_scalar {
 };
 
 struct ivec2 {
+        typedef int32_t element_type;
+
         ivec2() : ivec2(0) {}
         ivec2(I32 a): x(a), y(a) {}
         ivec2(int32_t x, int32_t y): x(x), y(y) {}
@@ -768,6 +774,8 @@ template<typename X, typename Y, typename Z> ivec3 make_ivec3(const X& x, const 
 }
 
 struct ivec4_scalar {
+        typedef int32_t element_type;
+
         int32_t x;
         int32_t y;
         int32_t z;
@@ -1006,6 +1014,7 @@ struct vec2_ref {
 
 struct vec3_scalar {
         typedef struct vec3 vector_type;
+        typedef float element_type;
 
         float x;
         float y;
@@ -1218,6 +1227,7 @@ struct vec3_ref {
 
 struct vec4_scalar {
         typedef struct vec4 vector_type;
+        typedef float element_type;
 
         float x;
         float y;
@@ -1277,6 +1287,7 @@ vec4_scalar vec2_scalar::sel(XYZW c1, XYZW c2, XYZW c3, XYZW c4) {
 
 struct vec4 {
         typedef struct vec4 vector_type;
+        typedef float element_type;
 
         constexpr vec4() : vec4(0) {}
         constexpr vec4(Float a): x(a), y(a), z(a), w(a) {}
@@ -2486,6 +2497,78 @@ void put_nth(vec4 &dst, int n, vec4_scalar src) {
         dst.y[n] = src.y;
         dst.z[n] = src.z;
         dst.w[n] = src.w;
+}
+
+// Use an ElementType type constructor
+// so that we can implement element_type for
+// Int and Float
+template<typename V>
+struct ElementType {
+    typedef typename V::element_type ty;
+};
+
+template<>
+struct ElementType<Float> {
+    typedef float ty;
+};
+
+template<>
+struct ElementType<I32> {
+    typedef int32_t ty;
+};
+
+void put_nth_component(ivec2_scalar &dst, int n, int32_t src) {
+    switch (n) {
+        case 0: dst.x = src; break;
+        case 1: dst.y = src; break;
+    }
+}
+
+void put_nth_component(ivec4_scalar &dst, int n, int32_t src) {
+    switch (n) {
+        case 0: dst.x = src; break;
+        case 1: dst.y = src; break;
+        case 2: dst.z = src; break;
+        case 3: dst.w = src; break;
+    }
+}
+
+
+
+void put_nth_component(int &dst, int n, int src) {
+    switch (n) {
+        case 0: dst = src; break;
+    }
+}
+
+void put_nth_component(float &dst, int n, float src) {
+    switch (n) {
+        case 0: dst = src; break;
+    }
+}
+
+void put_nth_component(vec2_scalar &dst, int n, float src) {
+    switch (n) {
+        case 0: dst.x = src; break;
+        case 1: dst.y = src; break;
+    }
+}
+
+void put_nth_component(vec3_scalar &dst, int n, float src) {
+    switch (n) {
+        case 0: dst.x = src; break;
+        case 1: dst.y = src; break;
+        case 2: dst.z = src; break;
+    }
+}
+
+void put_nth_component(vec4_scalar &dst, int n, float src) {
+    switch (n) {
+        case 0: dst.x = src; break;
+        case 1: dst.y = src; break;
+        case 2: dst.z = src; break;
+        case 3: dst.w = src; break;
+    }
 }
 
 Float init_interp(float init0, float step) {
